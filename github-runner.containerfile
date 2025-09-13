@@ -47,7 +47,7 @@ RUN --mount=type=secret,id=githubrunner_token,required=true GITHUB_RUNNER_TOKEN=
 
 # Install service
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
-    rsync -rvpK /ctx/system_files/githubrunner /
+    rsync -rvpK /ctx/system_files/githubrunner/ /
 
 # Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
