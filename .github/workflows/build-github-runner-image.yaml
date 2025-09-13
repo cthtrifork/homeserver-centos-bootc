@@ -26,7 +26,7 @@ env:
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}" # do not edit
   DEFAULT_TAG: "latest"
   IMAGE_NAME: github-runner-centos-bootc
-  BASE_IMAGE: ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest
+  BASE_IMAGE: ghcr.io/${{ github.repository }}/github-runner-centos-bootc:latest
   CONTEXT: ./
 
 jobs:
@@ -57,7 +57,7 @@ jobs:
       - name: Load image
         shell: bash
         run: |
-          podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest || true
+          podman pull $BASE_IMAGE || true
           systemctl --user enable --now podman.socket # for trivy
           export DOCKER_HOST="unix://${XDG_RUNTIME_DIR}/podman/podman.sock"
 
