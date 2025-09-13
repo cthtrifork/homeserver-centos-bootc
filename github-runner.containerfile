@@ -20,7 +20,7 @@ RUN dnf -y install dnf-plugins-core procps-ng curl file qemu-guest-agent git rsy
 
 WORKDIR /usr/actions-runner
 ENV VERSION=2.328.0
-RUN curl -o actions-runner-linux.tar.gz -L https://github.com/actions/runner/releases/download/${VERSION}/actions-runner-linux-x64-${VERSION}.tar.gz \
+RUN curl -o actions-runner-linux.tar.gz -L https://github.com/actions/runner/releases/download/v${VERSION}/actions-runner-linux-x64-${VERSION}.tar.gz \
 	&& tar xzf ./actions-runner-linux.tar.gz && \
 	rm ./actions-runner-linux.tar.gz
 
