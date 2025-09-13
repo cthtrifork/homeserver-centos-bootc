@@ -455,6 +455,7 @@ jobs:
           systemctl --user enable --now podman.socket # for trivy
           export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
           podman load -q -i ${{ github.workspace }}/pr-image.tar.gz
+          docker load -q -i ${{ github.workspace }}/pr-image.tar.gz
           podman images
 
       - name: Install deps (qemu, podman, jq)
