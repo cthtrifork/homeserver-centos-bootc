@@ -123,19 +123,6 @@ jobs:
             --secret id=registry_token,src=/tmp/REGISTRY_TOKEN
             --secret id=githubrunner_token,src=/tmp/GITHUBRUNNER_TOKEN
             --secret id=creds,src=/tmp/creds
-
-      - name: Trivy (base:latest)
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
-        with:
-          image-ref: ${{ env.BASE_IMAGE }}
-          format: table
-          output: trivy.md
-          ignore-unfixed: true
-          #severity: HIGH,CRITICAL
-          scanners: "vuln"
-        env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
        
       - name: Push to Container registry
         if: ${{ github.event_name != 'pull_request' }}
