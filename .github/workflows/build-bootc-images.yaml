@@ -480,27 +480,75 @@ jobs:
             key = "${PUBKEY}"
           EOF
  
-      - name: Start local registry
+      - name: Configure Podman
+        shell: bash
         run: |
-          podman run -d --name reg -p 5000:5000 registry:2
-          # give it a moment
-          sleep 2
+          sudo mkdir -p /etc/containers
+          echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
+            | sudo tee /etc/containers/storage.conf
 
-      - name: Load, tag, and push into local registry
-        run: |
-          set -e
-          podman tag "${{ env.PR_IMAGE }}" localhost:5000/homeserver-centos-bootc:pr-${{ github.sha }}
-          podman push --tls-verify=false localhost:5000/homeserver-centos-bootc:pr-${{ github.sha }}
+          # workaround https://github.com/containers/podman/issues/21683
+          sudo apt install -y sqlite3
+          echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
 
-      - name: Create VMDK image
+      - name: Build Bootable Image
         id: create-vmdk
-        uses: ublue-os/bootc-image-builder-action@main
-        with:
-          config-file: "out/config.toml"
-          type: qcow2
-          rootfs: xfs
-          image: localhost:5000/homeserver-centos-bootc:pr-${{ github.sha }}
+        shell: bash
+        env:
+          CONFIG_FILE: out/config.toml
+          IMAGE: ${{ env.PR_IMAGE }}
+          BOOTC_IMAGE_BUILDER_IMAGE: quay.io/centos-bootc/bootc-image-builder:latest
+          USE_LIBREPO: false
+          IMAGE_TYPE: qcow2
+          ROOTFS: xfs
+        run: | #sh
+          DESIRED_UID=$(id -u)
+          DESIRED_GID=$(id -g)
 
+          CONFIG_FILE_EXTENSION="${CONFIG_FILE##*.}"
+          mkdir -p ./output
+
+          INPUT_ARGS=""
+          if [ "${USE_LIBREPO}" == "true" ]; then
+              INPUT_ARGS+="--use-librepo=True "
+          else
+              INPUT_ARGS+="--use-librepo=False "
+          fi
+          [ -n "${ROOTFS}" ] && INPUT_ARGS+="--rootfs=${ROOTFS} "
+
+          sudo podman run \
+            --rm \
+            --privileged \
+            --pull=newer \
+            --security-opt label=type:unconfined_t \
+            -v $CONFIG_FILE:/config.$CONFIG_FILE_EXTENSION:ro \
+            -v ./output:/output \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
+            $BOOTC_IMAGE_BUILDER_IMAGE \
+            --type ${IMAGE_TYPE} \
+            --local \
+            --chown $DESIRED_UID:$DESIRED_GID \
+            ${INPUT_ARGS} \
+            $IMAGE
+
+          case "${IMAGE_TYPE}" in
+          "raw"|"ami") OUTPUT_DIRECTORY="./output/image" ;;
+          "iso") OUTPUT_DIRECTORY="./output/bootiso" ;;
+          "vhd") OUTPUT_DIRECTORY="./output/vpc" ;;
+          *) OUTPUT_DIRECTORY="./output/${IMAGE_TYPE}" ;;
+          esac
+
+          ISO_PATH=(${OUTPUT_DIRECTORY}/*)
+
+          # Create a checksum of the output file, stored in the same directory
+          CHECKSUM=$(sha256sum $ISO_PATH | awk '{print $1}')
+          CHECKSUM_PATH=${ISO_PATH}-CHECKSUM
+          echo $CHECKSUM > ${CHECKSUM_PATH}
+
+          echo "OUTPUT_DIRECTORY=$OUTPUT_DIRECTORY" >> $GITHUB_OUTPUT
+          echo "CHECKSUM=$CHECKSUM" >> $GITHUB_OUTPUT
+          echo "CHECKSUM_PATH=$CHECKSUM_PATH" >> $GITHUB_OUTPUT
+          echo "ISO_PATH=$ISO_PATH" >> $GITHUB_OUTPUT
       - name: Boot QEMU (headless) with SSH forward
         env:
           DISK: ${{ steps.create-vmdk.outputs.output-path }}
