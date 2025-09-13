@@ -6,13 +6,13 @@ on:
   pull_request:
     branches:
       - main
-  push:
     paths:
       - "Containerfile"
       - "config.toml"
       - "system_files/homeserver/"
       - "build_files/"
       - ".github/workflows/build-bootc-images.yaml"
+  push:
     branches:
       - main
 concurrency:
@@ -457,39 +457,6 @@ jobs:
           podman load -q -i ${{ github.workspace }}/pr-image.tar.gz
           podman images
 
-      - name: Run container with safe privileges for testing
-        run: |
-          # Start in background to allow exec steps
-          podman run --rm -d \
-            --name bootc-test \
-            --privileged \
-            --userns=auto \
-            -v /sys:/sys:ro \
-            ${{ env.PR_IMAGE }} bash -lc 'sleep 600'
-
-      - name: Inspect bootc bits and os-release
-        run: |
-          podman exec bootc-test bash -lc '
-            echo "=== os-release ==="; cat /etc/os-release || true
-            echo "=== bootc version ==="; bootc --version || true
-            echo "=== rpm sanity ==="; rpm -qa | wc -l || true
-          '
-
-      - name: bootc status (should print tree/image info)
-        run: |
-          podman exec bootc-test bash -lc 'bootc status || true'
-
-      - name: Systemd presence sanity
-        run: |
-          podman exec bootc-test bash -lc '
-            command -v systemctl || true
-            test -x /sbin/init && echo "/sbin/init present"
-          '
-
-      - name: Stop test container
-        if: always()
-        run: podman rm -f bootc-test || true
-
       - name: Install deps (qemu, podman, jq)
         run: |
           set -e
@@ -514,23 +481,18 @@ jobs:
             key = "${PUBKEY}"
           EOF
 
-      - name: Build QCOW2 with bootc-image-builder
-        run: |
-          set -e
-          mkdir -p out
-          sudo podman run --rm --privileged \
-            -v "$PWD/out":/output \
-            -v "$PWD/out/config.toml":/config.toml:ro \
-            -e IMAGE_REF="${IMAGE_REF}" \
-            quay.io/osbuild/bootc-image-builder:latest \
-              --type qcow2 \
-              --config /config.toml \
-              --local \
-              "${IMAGE_REF}"
-          # Move resulting qcow2 to a stable path
-          mv out/*/*.qcow2 "${DISK}"
+      - name: Create VMDK image
+        id: create-vmdk
+        uses: ublue-os/bootc-image-builder-action@main
+        with:
+          config-file: "$PWD/out/config.toml"
+          type: qcow2
+          rootfs: xfs
+          image: ${{ env.PR_IMAGE }}
 
       - name: Boot QEMU (headless) with SSH forward
+        env:
+          DISK: ${{ steps.create-vmdk.outputs.output-path }}
         run: |
           set -e
           qemu-system-x86_64 \
@@ -538,7 +500,7 @@ jobs:
             -enable-kvm \
             -cpu host \
             -m 2G \
-            -drive file="${BOOTC_TEMPDIR}/disk.raw",if=virtio,format=raw \
+            -drive if=virtio,file="${DISK}",format=qcow2 \
             -net nic,model=virtio \
             -net user,hostfwd=tcp::2222-:22 \
             -display none \
@@ -551,7 +513,7 @@ jobs:
           set -e
           for i in {1..90}; do
             if ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-                  -i out/ci_ssh_key -p "${SSH_PORT}" ${SSH_USER}@127.0.0.1 \
+                  -i out/ci_ssh_key -p "2222" ci@127.0.0.1 \
                   'echo ok' >/dev/null 2>&1; then
               echo "SSH is up"
               exit 0
@@ -567,7 +529,7 @@ jobs:
         run: |
           # Pass CORE_SERVICES into the remote env and run strict bash
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-              -i out/ci_ssh_key -p "${SSH_PORT}" ${SSH_USER}@127.0.0.1 \
+              -i out/ci_ssh_key -p "2222" ci@127.0.0.1 \
               CORE_SERVICES="${CORE_SERVICES}" 'bash -seuo pipefail' <<'EOSSH'
           set -euo pipefail
 
@@ -596,7 +558,7 @@ jobs:
         run: |
           set -e
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-              -i out/ci_ssh_key -p "${SSH_PORT}" ${SSH_USER}@127.0.0.1 \
+              -i out/ci_ssh_key -p "2222" ci@127.0.0.1 \
               'sudo ostree admin config-diff || true' | tee out/etc-drift.txt
           echo "---- Drift output ----"
           cat out/etc-drift.txt || true
@@ -611,7 +573,7 @@ jobs:
           mkdir -p out/journal
           # Journal
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-              -i out/ci_ssh_key -p "${SSH_PORT}" ${SSH_USER}@127.0.0.1 \
+              -i out/ci_ssh_key -p "2222" ci@127.0.0.1 \
               'sudo journalctl -b --no-pager -o short-precise | tail -n +1' > out/journal/boot.log || true
           # Stop QEMU
           if [ -f out/qemu.pid ]; then
@@ -627,5 +589,4 @@ jobs:
             out/qemu-console.log
             out/etc-drift.txt
             out/journal/boot.log
-            ${DISK}
           if-no-files-found: ignore
