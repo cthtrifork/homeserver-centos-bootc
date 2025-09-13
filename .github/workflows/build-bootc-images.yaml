@@ -453,9 +453,7 @@ jobs:
         shell: bash
         run: | #sh
           systemctl --user enable --now podman.socket # for trivy
-          #export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
           podman load -q -i ${{ github.workspace }}/pr-image.tar.gz
-          docker load -q -i ${{ github.workspace }}/pr-image.tar.gz
           podman images
 
       - name: Install deps (qemu, podman, jq)
@@ -502,7 +500,7 @@ jobs:
           config-file: "$PWD/out/config.toml"
           type: qcow2
           rootfs: xfs
-          image: ${{ env.PR_IMAGE }}
+          image: localhost:5000/homeserver-centos-bootc:pr-${{ github.sha }}
 
       - name: Boot QEMU (headless) with SSH forward
         env:
@@ -540,6 +538,8 @@ jobs:
           exit 1
 
       - name: Basic health checks (fail-fast)
+        env:
+          CORE_SERVICES: "sshd NetworkManager"
         run: |
           # Pass CORE_SERVICES into the remote env and run strict bash
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
