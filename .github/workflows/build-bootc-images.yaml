@@ -490,5 +490,142 @@ jobs:
         if: always()
         run: podman rm -f bootc-test || true
 
+      - name: Install deps (qemu, podman, jq)
+        run: |
+          set -e
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends qemu-system-x86 qemu-utils podman jq
 
+      - name: Generate ephemeral SSH keypair
+        run: |
+          set -e
+          mkdir -p out
+          ssh-keygen -t ed25519 -N "" -f out/ci_ssh_key
+          echo "PUBKEY=$(cat out/ci_ssh_key.pub)" >> $GITHUB_ENV
 
+      - name: Write bootc-image-builder user config (SSH access)
+        run: |
+          set -e
+          cat > out/config.toml <<'EOF'
+          [customizations]
+            [[customizations.user]]
+            name = "ci"
+            groups = ["wheel"]
+            key = "${PUBKEY}"
+          EOF
+
+      - name: Build QCOW2 with bootc-image-builder
+        run: |
+          set -e
+          mkdir -p out
+          sudo podman run --rm --privileged \
+            -v "$PWD/out":/output \
+            -v "$PWD/out/config.toml":/config.toml:ro \
+            -e IMAGE_REF="${IMAGE_REF}" \
+            quay.io/osbuild/bootc-image-builder:latest \
+              --type qcow2 \
+              --config /config.toml \
+              --local \
+              "${IMAGE_REF}"
+          # Move resulting qcow2 to a stable path
+          mv out/*/*.qcow2 "${DISK}"
+
+      - name: Boot QEMU (headless) with SSH forward
+        run: |
+          set -e
+          qemu-system-x86_64 \
+            -name bootc-vm \
+            -enable-kvm \
+            -cpu host \
+            -m 2G \
+            -drive file="${BOOTC_TEMPDIR}/disk.raw",if=virtio,format=raw \
+            -net nic,model=virtio \
+            -net user,hostfwd=tcp::2222-:22 \
+            -display none \
+            -daemonize
+            > out/qemu-console.log 2>&1 &
+          echo $! > out/qemu.pid
+
+      - name: Wait for SSH
+        run: |
+          set -e
+          for i in {1..90}; do
+            if ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+                  -i out/ci_ssh_key -p "${SSH_PORT}" ${SSH_USER}@127.0.0.1 \
+                  'echo ok' >/dev/null 2>&1; then
+              echo "SSH is up"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "SSH did not come up in time"
+          echo "---- QEMU console tail ----"
+          tail -n 200 out/qemu-console.log || true
+          exit 1
+
+      - name: Basic health checks (fail-fast)
+        run: |
+          # Pass CORE_SERVICES into the remote env and run strict bash
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+              -i out/ci_ssh_key -p "${SSH_PORT}" ${SSH_USER}@127.0.0.1 \
+              CORE_SERVICES="${CORE_SERVICES}" 'bash -seuo pipefail' <<'EOSSH'
+          set -euo pipefail
+
+          echo "--- system is-running ---"
+          systemctl is-system-running --wait
+
+          echo "--- network ---"
+          ip -br a
+          ping -c1 -W2 1.1.1.1
+
+          echo "--- core services ---"
+          for s in $CORE_SERVICES; do
+            systemctl is-active --quiet "$s" || {
+              echo "Service not active: $s"
+              systemctl status "$s" --no-pager || true
+              exit 1
+            }
+          done
+
+          echo "--- versions ---"
+          bootc status || true
+          rpm-ostree status || true
+          EOSSH
+
+      - name: /etc drift detector (fail on unexpected drift)
+        run: |
+          set -e
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+              -i out/ci_ssh_key -p "${SSH_PORT}" ${SSH_USER}@127.0.0.1 \
+              'sudo ostree admin config-diff || true' | tee out/etc-drift.txt
+          echo "---- Drift output ----"
+          cat out/etc-drift.txt || true
+          if grep -E '^[AMD]\s+/etc' out/etc-drift.txt | grep -Ev "${DRIFT_ALLOW_RE}" >/dev/null; then
+            echo "::error::Unexpected /etc drift detected (see artifact)."
+            exit 1
+          fi
+
+      - name: Collect logs and stop QEMU
+        if: always()
+        run: |
+          mkdir -p out/journal
+          # Journal
+          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+              -i out/ci_ssh_key -p "${SSH_PORT}" ${SSH_USER}@127.0.0.1 \
+              'sudo journalctl -b --no-pager -o short-precise | tail -n +1' > out/journal/boot.log || true
+          # Stop QEMU
+          if [ -f out/qemu.pid ]; then
+            kill -TERM "$(cat out/qemu.pid)" || true
+          fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qemu-smoke-artifacts
+          path: |
+            out/qemu-console.log
+            out/etc-drift.txt
+            out/journal/boot.log
+            ${DISK}
+          if-no-files-found: ignore
