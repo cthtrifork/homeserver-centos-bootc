@@ -481,6 +481,19 @@ jobs:
             groups = ["wheel"]
             key = "${PUBKEY}"
           EOF
+ 
+      - name: Start local registry
+        run: |
+          podman run -d --name reg -p 5000:5000 registry:2
+          # give it a moment
+          sleep 2
+
+      - name: Load, tag, and push into local registry
+        run: |
+          set -e
+          IMG_ID="$(podman load -q -i '${{ github.workspace }}/pr-image.tar.gz' | awk '{print $NF}')"
+          podman tag "$IMG_ID" localhost:5000/homeserver-centos-bootc:pr-${{ github.sha }}
+          podman push --tls-verify=false localhost:5000/homeserver-centos-bootc:pr-${{ github.sha }}
 
       - name: Create VMDK image
         id: create-vmdk
