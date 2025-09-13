@@ -25,7 +25,7 @@ RUN curl -o actions-runner-linux.tar.gz -L https://github.com/actions/runner/rel
 	rm ./actions-runner-linux.tar.gz
 
 ENV RUNNER_ALLOW_RUNASROOT="1"
-RUN --mount=type=secret,id=githubrunner_token,required=true export GITHUB_RUNNER_TOKEN="$(cat /run/secrets/githubrunner_token)" \
+RUN --mount=type=secret,id=githubrunner_token,required=true GITHUB_RUNNER_TOKEN="$(cat /run/secrets/githubrunner_token)"; \
     ./config.sh --url https://github.com/cthtrifork/homeserver-centos-bootc --token ${GITHUB_RUNNER_TOKEN}
 
 # todo move to own service? https://docs.github.com/en/actions/how-tos/manage-runners/self-hosted-runners/configure-the-application
