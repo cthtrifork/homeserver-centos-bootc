@@ -504,7 +504,7 @@ jobs:
       - name: Boot QEMU (headless) with SSH forward
         env:
           DISK: ${{ steps.create-vmdk.outputs.output-path }}
-        run: |
+        run: | #sh
           set -e
           qemu-system-x86_64 \
             -name bootc-vm \
@@ -518,9 +518,10 @@ jobs:
             -daemonize
             > out/qemu-console.log 2>&1 &
           echo $! > out/qemu.pid
-
+        
+      # todo: simplify
       - name: Wait for SSH
-        run: |
+        run: | #sh
           set -e
           for i in {1..90}; do
             if ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
@@ -539,7 +540,7 @@ jobs:
       - name: Basic health checks (fail-fast)
         env:
           CORE_SERVICES: "sshd NetworkManager"
-        run: |
+        run: | #sh
           # Pass CORE_SERVICES into the remote env and run strict bash
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
               -i out/ci_ssh_key -p "2222" ci@127.0.0.1 \
@@ -568,7 +569,7 @@ jobs:
           EOSSH
 
       - name: /etc drift detector (fail on unexpected drift)
-        run: |
+        run: | #sh
           set -e
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
               -i out/ci_ssh_key -p "2222" ci@127.0.0.1 \
@@ -582,7 +583,7 @@ jobs:
 
       - name: Collect logs and stop QEMU
         if: always()
-        run: |
+        run: | #sh
           mkdir -p out/journal
           # Journal
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
