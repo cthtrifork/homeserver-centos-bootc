@@ -49,8 +49,15 @@ RUN --mount=type=secret,id=githubrunner_token,required=true GITHUB_RUNNER_TOKEN=
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     rsync -rvpK /ctx/system_files/githubrunner /
 
+# Cleanup
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     /ctx/build_files/cleanup.sh 
+
+# Activate services
+RUN systemctl enable docker.socket && \
+    systemctl enable qemu-guest-agent && \
+    systemctl enable podman.socket && \
+    systemctl enable actions.runner.service
 
 RUN bootc container lint
