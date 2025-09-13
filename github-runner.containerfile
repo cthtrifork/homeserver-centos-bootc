@@ -29,9 +29,9 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     /ctx/build_files/server-docker-ce.sh
 
 # Create runner user
-RUN useradd -m -d /home/runner -s /bin/bash --groups wheel,docker runner && \
-    mkdir -m 0700 -p /home/exampleuser/.ssh && \
-    chown -R exampleuser: /home/exampleuser
+RUN useradd --groups wheel,docker runner && \
+    mkdir -m 0700 -p /home/runner/ && \
+    chown -R runner: /home/runner
 
 WORKDIR /home/runner
 
