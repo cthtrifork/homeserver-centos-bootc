@@ -1,4 +1,4 @@
-name: Build bootable container image
+name: Build homeserver bootable container image
 on:
   schedule:
     - cron: "0 3 * * 0" # Runs at 03:00, only on Sunday for security patching
@@ -7,17 +7,14 @@ on:
     branches:
       - main
   push:
-    #    paths:
-    #      - "Containerfile"
-    #      - "config.toml"
-    #      - ".github/workflows/build-bootc-images.yaml"
+    paths:
+      - "Containerfile"
+      - "config.toml"
+      - "system_files/"
+      - "build_files/"
+      - ".github/workflows/build-bootc-images.yaml"
     branches:
       - main
-    paths-ignore:
-      - README.md
-      - .editorconfig
-      - .gitignore
-      - ./github/
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
@@ -25,7 +22,7 @@ concurrency:
 env:
   IMAGE_DESC: "${{ github.event.repository.description }}"
   #IMAGE_LOGO_URL: "https://raw.githubusercontent.com/astrovm/amyos/main/repo_files/amy-logo-white.png" # Put your own image here for a fancy profile on https://artifacthub.io/!
-  #IMAGE_NAME: "${{ github.event.repository.name }}" # output image name, usually same as repo name
+  REPO_NAME: "${{ github.event.repository.name }}" # output image name, usually same as repo name
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}" # do not edit
   DEFAULT_TAG: "latest"
   IMAGE_NAME: homeserver-centos-bootc
@@ -35,7 +32,7 @@ env:
 
 jobs:
   build-bootc-image:
-    name: Build bootable container image
+    name: Build image
     runs-on: ubuntu-latest
     continue-on-error: false
     timeout-minutes: 10
@@ -63,7 +60,7 @@ jobs:
         run: |
           podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
           systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///Users/<MY_USER>/.local/share/containers/podman/machine/podman-machine-default/podman.sock'
+          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
 
       - name: Get current date
         id: date
@@ -89,10 +86,10 @@ jobs:
           labels: |
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
             org.opencontainers.image.description=${{ env.IMAGE_DESC }}
-            org.opencontainers.image.documentation=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/refs/heads/main/README.md
-            org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/blob/main/Containerfile
-            org.opencontainers.image.title=${{ env.IMAGE_NAME }}
-            org.opencontainers.image.url=https://github.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+            org.opencontainers.image.documentation=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.REPO_NAME }}/refs/heads/main/README.md
+            org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ env.REPO_NAME }}/blob/main/Containerfile
+            org.opencontainers.image.title=${{ env.REPO_NAME }}
+            org.opencontainers.image.url=https://github.com/${{ github.repository_owner }}/${{ env.REPO_NAME }}
             org.opencontainers.image.vendor=${{ github.repository_owner }}
             org.opencontainers.image.version=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
             containers.bootc=1
