@@ -41,11 +41,13 @@ RUN curl -o actions-runner-linux.tar.gz -L https://github.com/actions/runner/rel
 	rm ./actions-runner-linux.tar.gz
 
 ENV RUNNER_ALLOW_RUNASROOT="1"
+ARG REPOSITORY="notset"
 RUN --mount=type=secret,id=githubrunner_token,required=true GITHUB_RUNNER_TOKEN="$(cat /run/secrets/githubrunner_token)"; \
-    ./config.sh --url https://github.com/cthtrifork/homeserver-centos-bootc --token ${GITHUB_RUNNER_TOKEN}
+    ./config.sh --url $REPOSITORY --token ${GITHUB_RUNNER_TOKEN}
 
 # Install service
-RUN cp system_files/githubrunner/usr/lib/systemd/system/actions.runner.service usr/lib/systemd/system/actions.runner.service
+RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+    cp system_files/githubrunner/usr/lib/systemd/system/actions.runner.service usr/lib/systemd/system/actions.runner.service
 
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
