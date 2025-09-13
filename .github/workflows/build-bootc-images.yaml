@@ -489,8 +489,7 @@ jobs:
       - name: Load, tag, and push into local registry
         run: |
           set -e
-          IMG_ID="$(podman load -q -i '${{ github.workspace }}/pr-image.tar.gz' | awk '{print $NF}')"
-          podman tag "$IMG_ID" localhost:5000/homeserver-centos-bootc:pr-${{ github.sha }}
+          podman tag "${{ env.PR_IMAGE }}" localhost:5000/homeserver-centos-bootc:pr-${{ github.sha }}
           podman push --tls-verify=false localhost:5000/homeserver-centos-bootc:pr-${{ github.sha }}
 
       - name: Create VMDK image
