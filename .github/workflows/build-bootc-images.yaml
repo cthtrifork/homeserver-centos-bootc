@@ -491,6 +491,7 @@ jobs:
           sudo apt install -y sqlite3
           echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
 
+      # https://github.com/bootc-dev/bootc/blob/main/tests/build.sh
       - name: Build Bootable Image
         id: create-vmdk
         shell: bash
