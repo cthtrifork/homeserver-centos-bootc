@@ -505,7 +505,6 @@ jobs:
           DESIRED_UID=$(id -u)
           DESIRED_GID=$(id -g)
 
-          CONFIG_FILE_EXTENSION="${CONFIG_FILE##*.}"
           mkdir -p ./output
 
           INPUT_ARGS=""
@@ -521,7 +520,7 @@ jobs:
             --privileged \
             --pull=newer \
             --security-opt label=type:unconfined_t \
-            -v $CONFIG_FILE:/config.$CONFIG_FILE_EXTENSION:ro \
+            -v $CONFIG_FILE:/config.toml:ro \
             -v ./output:/output \
             -v /var/lib/containers/storage:/var/lib/containers/storage \
             $BOOTC_IMAGE_BUILDER_IMAGE \
@@ -549,6 +548,7 @@ jobs:
           echo "CHECKSUM=$CHECKSUM" >> $GITHUB_OUTPUT
           echo "CHECKSUM_PATH=$CHECKSUM_PATH" >> $GITHUB_OUTPUT
           echo "ISO_PATH=$ISO_PATH" >> $GITHUB_OUTPUT
+
       - name: Boot QEMU (headless) with SSH forward
         env:
           DISK: ${{ steps.create-vmdk.outputs.output-path }}
@@ -566,7 +566,7 @@ jobs:
             -daemonize
             > out/qemu-console.log 2>&1 &
           echo $! > out/qemu.pid
-        
+
       # todo: simplify
       - name: Wait for SSH
         run: | #sh
