@@ -43,7 +43,7 @@ RUN curl -o actions-runner-linux.tar.gz -L https://github.com/actions/runner/rel
 ENV RUNNER_ALLOW_RUNASROOT="1"
 ARG REPOSITORY="notset"
 RUN --mount=type=secret,id=githubrunner_token,required=true GITHUB_RUNNER_TOKEN="$(cat /run/secrets/githubrunner_token)"; \
-    ./config.sh --url $REPOSITORY --token ${GITHUB_RUNNER_TOKEN}
+    ./config.sh --url $REPOSITORY  --unattended --token ${GITHUB_RUNNER_TOKEN}
 
 # Install service
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
