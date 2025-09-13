@@ -569,6 +569,9 @@ jobs:
           EOSSH
 
       - name: /etc drift detector (fail on unexpected drift)
+        env:
+            # Allow-list: expected first-boot changes under /etc (adjust as your image evolves)
+            DRIFT_ALLOW_RE: "(^A\\s+/etc/ssh/ssh_host_.*|^A\\s+/etc/machine-id|^M\\s+/etc/issue.*|^A\\s+/etc/NetworkManager/system-connections/.*|^A\\s+/etc/resolv.conf)$"
         run: | #sh
           set -e
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
