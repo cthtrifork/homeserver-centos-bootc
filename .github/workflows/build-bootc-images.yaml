@@ -10,7 +10,7 @@ on:
     paths:
       - "Containerfile"
       - "config.toml"
-      - "system_files/"
+      - "system_files/homeserver/"
       - "build_files/"
       - ".github/workflows/build-bootc-images.yaml"
     branches:
@@ -489,5 +489,6 @@ jobs:
       - name: Stop test container
         if: always()
         run: podman rm -f bootc-test || true
+
 
 
