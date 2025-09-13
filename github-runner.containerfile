@@ -44,7 +44,7 @@ ENV RUNNER_ALLOW_RUNASROOT="1"
 ARG REPOSITORY="notset"
 # Fetch a registration  token (only works for 1 hour!)
 RUN --mount=type=secret,id=registry_token,required=true GITHUB_TOKEN="$(cat /run/secrets/registry_token)"; \
-    RUNNER_TOKEN=$(curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/$REPOSITORY/actions/runners/registration-token | jq -r .token)
+    RUNNER_TOKEN=$(curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/$REPOSITORY/actions/runners/registration-token | jq -r .token); \
     ./config.sh --replace --url https://github.com/${REPOSITORY} --token ${RUNNER_TOKEN} \
     --work /home/runner --labels self-hosted,Linux,X64 --unattended
 
