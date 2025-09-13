@@ -496,7 +496,7 @@ jobs:
         id: create-vmdk
         uses: ublue-os/bootc-image-builder-action@main
         with:
-          config-file: "$PWD/out/config.toml"
+          config-file: "out/config.toml"
           type: qcow2
           rootfs: xfs
           image: localhost:5000/homeserver-centos-bootc:pr-${{ github.sha }}
