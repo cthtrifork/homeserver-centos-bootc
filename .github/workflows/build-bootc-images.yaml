@@ -614,7 +614,7 @@ jobs:
             ${SSH_USERNAME}@localhost \
             "rpm-ostree status"
 
-      - name: Basic health checks (fail-fast)
+      - name: Basic health checks
         env:
           CORE_SERVICES: "sshd NetworkManager"
           SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
@@ -644,7 +644,6 @@ jobs:
 
       - name: /etc drift detector (fail on unexpected drift)
         env:
-          CORE_SERVICES: "sshd NetworkManager"
           SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
           SSH_USERNAME: ${{ env.SSH_USERNAME }}
           SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
@@ -669,7 +668,6 @@ jobs:
       - name: Collect logs and stop QEMU
         if: always()
         env:
-          CORE_SERVICES: "sshd NetworkManager"
           SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
           SSH_USERNAME: ${{ env.SSH_USERNAME }}
           SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
