@@ -97,8 +97,7 @@ jobs:
       - name: Prepare build secrets
         run: |
           umask 077
-          printf '%s' "${{ secrets.PAT_RENOVATEBOT }}" > /tmp/REGISTRY_TOKEN
-          printf '%s' "${{ secrets.GITHUBRUNNER_TOKEN }}" > /tmp/GITHUBRUNNER_TOKEN
+          printf '%s' "${{ secrets.PAT_PULL || secrets.PAT_RENOVATEBOT }}" > /tmp/REGISTRY_TOKEN
           cp ${HOME}/.docker/config.json /tmp/creds
 
       - name: Use buildah build to create the image
@@ -114,12 +113,11 @@ jobs:
           build-args: |
             REGISTRY_USERNAME="${{ github.repository_owner }}"
             REGISTRY_URL=ghcr.io
-            REPOSITORY=https://github.com/${{ github.repository_owner }}/${{ github.event.repository.name }}
+            REPOSITORY=${{ github.repository_owner }}/${{ github.event.repository.name }}
           containerfiles: |
             ${{ env.CONTEXT }}/github-runner.containerfile
           extra-args: |
             --secret id=registry_token,src=/tmp/REGISTRY_TOKEN
-            --secret id=githubrunner_token,src=/tmp/GITHUBRUNNER_TOKEN
             --secret id=creds,src=/tmp/creds
        
       - name: Push to Container registry

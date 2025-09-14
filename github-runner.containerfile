@@ -42,8 +42,11 @@ RUN curl -o actions-runner-linux.tar.gz -L https://github.com/actions/runner/rel
 
 ENV RUNNER_ALLOW_RUNASROOT="1"
 ARG REPOSITORY="notset"
-RUN --mount=type=secret,id=githubrunner_token,required=true GITHUB_RUNNER_TOKEN="$(cat /run/secrets/githubrunner_token)"; \
-    ./config.sh --url $REPOSITORY --token ${GITHUB_RUNNER_TOKEN}
+# Fetch a registration  token (only works for 1 hour!)
+RUN --mount=type=secret,id=registry_token,required=true GITHUB_TOKEN="$(cat /run/secrets/registry_token)"; \
+    RUNNER_TOKEN=$(curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/$REPOSITORY/actions/runners/registration-token | jq -r .token); \
+    ./config.sh --replace --url https://github.com/${REPOSITORY} --token ${RUNNER_TOKEN} \
+    --work /home/runner --labels self-hosted,Linux,X64 --unattended
 
 # Install service
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
