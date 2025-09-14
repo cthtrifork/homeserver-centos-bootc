@@ -617,6 +617,9 @@ jobs:
       - name: Basic health checks (fail-fast)
         env:
           CORE_SERVICES: "sshd NetworkManager"
+          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
         run: | #sh
           # turn the env string into a Bash array
           read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
@@ -641,8 +644,12 @@ jobs:
 
       - name: /etc drift detector (fail on unexpected drift)
         env:
-            # Allow-list: expected first-boot changes under /etc (adjust as your image evolves)
-            DRIFT_ALLOW_RE: "(^A\\s+/etc/ssh/ssh_host_.*|^A\\s+/etc/machine-id|^M\\s+/etc/issue.*|^A\\s+/etc/NetworkManager/system-connections/.*|^A\\s+/etc/resolv.conf)$"
+          CORE_SERVICES: "sshd NetworkManager"
+          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+          # Allow-list: expected first-boot changes under /etc (adjust as your image evolves)
+          DRIFT_ALLOW_RE: "(^A\\s+/etc/ssh/ssh_host_.*|^A\\s+/etc/machine-id|^M\\s+/etc/issue.*|^A\\s+/etc/NetworkManager/system-connections/.*|^A\\s+/etc/resolv.conf)$"
         run: | #sh
           set -e
           # turn the env string into a Bash array
@@ -661,6 +668,11 @@ jobs:
 
       - name: Collect logs and stop QEMU
         if: always()
+        env:
+          CORE_SERVICES: "sshd NetworkManager"
+          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
         run: | #sh
           mkdir -p out/journal
           # Journal
