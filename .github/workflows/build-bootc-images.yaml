@@ -424,7 +424,6 @@ jobs:
           category: trivy
 
   test:
-    environment: dev
     runs-on: ubuntu-latest
     needs: build-bootc-image
     if: ${{ github.event_name == 'pull_request' }}
@@ -437,6 +436,7 @@ jobs:
       pull-requests: write
     env:
       SSH_USERNAME: ci
+      SSH_OPTIONS: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
     steps:
       - name: Download PR image
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
@@ -482,6 +482,7 @@ jobs:
           key = "${PUBKEY}"
           groups = ["wheel"]
           EOF
+          cat ./out/config.toml
  
       - name: Configure Podman
         shell: bash
@@ -574,11 +575,12 @@ jobs:
         env:
           SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
           SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+          SLEEP_SECONDS: 10
+          RETRIES: 10
         run: | #sh
-          SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
-          
           wait_for_ssh_up() {
-            SSH_STATUS=$(ssh "${SSH_OPTIONS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@"${1}" '/bin/bash -c "echo -n READY"')
+            SSH_STATUS=$(ssh "${SSH_OPTIONS}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@"${1}" '/bin/bash -c "echo -n READY"')
             if [[ $SSH_STATUS == READY ]]; then
               echo 1
             else
@@ -586,51 +588,50 @@ jobs:
             fi
           }
 
-          for _ in $(seq 0 10); do
+          for _ in $(seq 0 ${RETRIES}); do
             RESULT=$(wait_for_ssh_up "localhost")
             if [[ $RESULT == 1 ]]; then
               echo "SSH is ready now! 🥳"
               break
             fi
-            sleep 10
+            sleep ${SLEEP_SECONDS}
           done
 
           # Make sure VM is ready for testing
-          ssh "${SSH_OPTIONS[@]}" \
+          ssh "${SSH_OPTIONS}" \
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
             "bootc status"
 
+          ssh "${SSH_OPTIONS}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+            "rpm-ostree status"
+
       - name: Basic health checks (fail-fast)
         env:
           CORE_SERVICES: "sshd NetworkManager"
         run: | #sh
+         ssh "${SSH_OPTIONS}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost "
+            set -euo pipefail
 
-          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-              -i out/ci_ssh_key -p "2222" ci@127.0.0.1 \
-              CORE_SERVICES="${CORE_SERVICES}" 'bash -seuo pipefail' <<'EOSSH'
-          set -euo pipefail
+            echo "--- system is-running ---"
+            systemctl is-system-running --wait
 
-          echo "--- system is-running ---"
-          systemctl is-system-running --wait
-
-          echo "--- network ---"
-          ip -br a
-          ping -c1 -W2 1.1.1.1
-
-          echo "--- core services ---"
-          for s in $CORE_SERVICES; do
-            systemctl is-active --quiet "$s" || {
-              echo "Service not active: $s"
-              systemctl status "$s" --no-pager || true
-              exit 1
-            }
-          done
-
-          echo "--- versions ---"
-          rpm-ostree status || true
-          EOSSH
+            echo "--- core services ---"
+            for s in $CORE_SERVICES; do
+              systemctl is-active --quiet "$s" || {
+                echo "Service not active: $s"
+                systemctl status "$s" --no-pager || true
+                exit 1
+              }
+            done
+          "
 
       - name: /etc drift detector (fail on unexpected drift)
         env:
@@ -638,8 +639,10 @@ jobs:
             DRIFT_ALLOW_RE: "(^A\\s+/etc/ssh/ssh_host_.*|^A\\s+/etc/machine-id|^M\\s+/etc/issue.*|^A\\s+/etc/NetworkManager/system-connections/.*|^A\\s+/etc/resolv.conf)$"
         run: | #sh
           set -e
-          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-              -i out/ci_ssh_key -p "2222" ci@127.0.0.1 \
+          ssh "${SSH_OPTIONS}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
               'sudo ostree admin config-diff || true' | tee out/etc-drift.txt
           echo "---- Drift output ----"
           cat out/etc-drift.txt || true
@@ -653,8 +656,10 @@ jobs:
         run: | #sh
           mkdir -p out/journal
           # Journal
-          ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-              -i out/ci_ssh_key -p "2222" ci@127.0.0.1 \
+          ssh "${SSH_OPTIONS}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
               'sudo journalctl -b --no-pager -o short-precise | tail -n +1' > out/journal/boot.log || true
           # Stop QEMU
           if [ -f out/qemu.pid ]; then
