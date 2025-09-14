@@ -567,6 +567,8 @@ jobs:
             -net user,hostfwd=tcp::2222-:22 \
             -display none \
             -daemonize
+            > out/qemu-console.log 2>&1 &
+          echo $! > out/qemu.pid
 
       - name: Wait for SSH
         env:
@@ -662,11 +664,11 @@ jobs:
       - name: Publish Output to summary
         run: | #sh
           {
-            echo "### Security Output"
+            echo "### QEMU Testing Output"
             echo "<details><summary>Click to expand</summary>"
             echo ""
             echo '```'
-            cat out/etc-drift.txt
+            cat out/qemu-console.log
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
