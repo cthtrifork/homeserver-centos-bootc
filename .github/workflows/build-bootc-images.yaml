@@ -600,7 +600,7 @@ jobs:
             sleep ${SLEEP_SECONDS}
           done
 
-          # Make sure VM is ready for testing with basic health checks
+          # Make sure VM is ready for testing
           ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
@@ -613,11 +613,34 @@ jobs:
             ${SSH_USERNAME}@localhost \
             "rpm-ostree status"
           
+      - name: Basic health checks
+        env:
+          CORE_SERVICES: "sshd NetworkManager"
+          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        run: | #sh
+          # turn the env string into a Bash array
+          ALL_SERVICES= $(systemctl list-unit-files --type=service --state=enabled --no-legend | awk '{print $1}' | grep -v '@\.service$')
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
           ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
-            ${SSH_USERNAME}@localhost \
-            "systemctl is-system-running --wait"
+            ${SSH_USERNAME}@localhost "
+            set -euo pipefail
+
+            echo '--- system is-running ---'
+            systemctl is-system-running --wait
+
+            echo '--- core services ---'
+            for s in $CORE_SERVICES; do
+              systemctl is-active --quiet $s || {
+                echo 'Service not active: $s'
+                systemctl status '$s' --no-pager || true
+                exit 1
+              }
+            done
+          "
 
       # - name: /etc drift detector (fail on unexpected drift)
       #   env:
