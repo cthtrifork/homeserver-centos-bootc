@@ -454,9 +454,6 @@ jobs:
       - name: Load PR image
         shell: bash
         run: | #sh
-          systemctl --user enable --now podman.socket # for trivy
-          podman load -q -i ${{ github.workspace }}/pr-image.tar.gz
-          podman images
           sudo podman load -q -i ${{ github.workspace }}/pr-image.tar.gz
 
       - name: Install deps (qemu, podman, jq)
@@ -473,17 +470,17 @@ jobs:
           ssh-keygen -t ed25519 -N "" -f out/ci_ssh_key
           echo "PUBKEY=$(cat out/ci_ssh_key.pub)" >> $GITHUB_ENV
 
-          echo "ssh_key=out/ci_ssh_key" >> $GITHUB_OUTPUT
+          echo "ssh_key=./out/ci_ssh_key" >> $GITHUB_OUTPUT
 
       - name: Write bootc-image-builder user config (SSH access)
         run: |
           set -e
           cat > out/config.toml <<'EOF'
-          [customizations]
-            [[customizations.user]]
-            name = "${{ env.SSH_USERNAME }}"
-            groups = ["wheel"]
-            key = "${PUBKEY}"
+          [[customizations.user]]
+          name = "${{ env.SSH_USERNAME }}"
+          password = ""
+          key = "${PUBKEY}"
+          groups = ["wheel"]
           EOF
  
       - name: Configure Podman
@@ -526,10 +523,10 @@ jobs:
             --privileged \
             --pull=newer \
             --security-opt label=type:unconfined_t \
-            -v $CONFIG_FILE:/config.toml:ro \
+            -v ${CONFIG_FILE}:/config.toml:ro \
             -v ./output:/output \
             -v /var/lib/containers/storage:/var/lib/containers/storage \
-            $BOOTC_IMAGE_BUILDER_IMAGE \
+            ${BOOTC_IMAGE_BUILDER_IMAGE} \
             --type ${IMAGE_TYPE} \
             --local \
             --chown $DESIRED_UID:$DESIRED_GID \
@@ -570,8 +567,6 @@ jobs:
             -net user,hostfwd=tcp::2222-:22 \
             -display none \
             -daemonize
-            > out/qemu-console.log 2>&1 &
-          echo $! > out/qemu.pid
 
       - name: Wait for SSH
         env:
@@ -589,7 +584,7 @@ jobs:
             fi
           }
 
-          for _ in $(seq 0 30); do
+          for _ in $(seq 0 10); do
             RESULT=$(wait_for_ssh_up "localhost")
             if [[ $RESULT == 1 ]]; then
               echo "SSH is ready now! 🥳"
@@ -632,7 +627,6 @@ jobs:
           done
 
           echo "--- versions ---"
-          bootc status || true
           rpm-ostree status || true
           EOSSH
 
@@ -664,6 +658,18 @@ jobs:
           if [ -f out/qemu.pid ]; then
             kill -TERM "$(cat out/qemu.pid)" || true
           fi
+
+      - name: Publish Output to summary
+        run: | #sh
+          {
+            echo "### Security Output"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '```'
+            cat out/etc-drift.txt
+            echo '```'
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
 
       - name: Upload artifacts
         if: always()
