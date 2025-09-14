@@ -455,6 +455,7 @@ jobs:
           systemctl --user enable --now podman.socket # for trivy
           podman load -q -i ${{ github.workspace }}/pr-image.tar.gz
           podman images
+          sudo podman load -q -i ${{ github.workspace }}/pr-image.tar.gz
 
       - name: Install deps (qemu, podman, jq)
         run: |
