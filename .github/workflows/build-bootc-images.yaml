@@ -621,7 +621,7 @@ jobs:
           SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
         run: | #sh
           # turn the env string into a Bash array
-          ALL_SERVICES= $(systemctl list-unit-files --type=service --state=enabled --no-legend | awk '{print $1}' | grep -v '@\.service$')
+          ALL_SERVICES=$(systemctl list-unit-files --type=service --state=enabled --no-legend | awk '{print $1}' | grep -v '@\.service$')
           read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
           ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
