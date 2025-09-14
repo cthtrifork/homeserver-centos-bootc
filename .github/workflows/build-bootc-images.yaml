@@ -496,7 +496,7 @@ jobs:
         id: create-vmdk
         shell: bash
         env:
-          CONFIG_FILE: out/config.toml
+          CONFIG_FILE: ./out/config.toml
           IMAGE: ${{ env.PR_IMAGE }}
           BOOTC_IMAGE_BUILDER_IMAGE: quay.io/centos-bootc/bootc-image-builder:latest
           USE_LIBREPO: false
