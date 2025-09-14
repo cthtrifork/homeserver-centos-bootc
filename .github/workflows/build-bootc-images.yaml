@@ -562,7 +562,7 @@ jobs:
           DISK: ${{ steps.create-vmdk.outputs.path }}
         run: | #sh
           set -e
-          qemu-system-x86_64 \
+          sudo qemu-system-x86_64 \
             -name bootc-vm \
             -enable-kvm \
             -cpu host \
