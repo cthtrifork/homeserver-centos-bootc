@@ -435,6 +435,8 @@ jobs:
       packages: read
       id-token: write
       pull-requests: write
+    env:
+      SSH_USERNAME: ci
     steps:
       - name: Download PR image
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
@@ -464,11 +466,14 @@ jobs:
           sudo apt-get install -y --no-install-recommends qemu-system-x86 qemu-utils podman jq
 
       - name: Generate ephemeral SSH keypair
-        run: |
+        id: ssh-key
+        run: | #sh
           set -e
           mkdir -p out
           ssh-keygen -t ed25519 -N "" -f out/ci_ssh_key
           echo "PUBKEY=$(cat out/ci_ssh_key.pub)" >> $GITHUB_ENV
+
+          echo "ssh_key=out/ci_ssh_key" >> $GITHUB_OUTPUT
 
       - name: Write bootc-image-builder user config (SSH access)
         run: |
@@ -476,14 +481,14 @@ jobs:
           cat > out/config.toml <<'EOF'
           [customizations]
             [[customizations.user]]
-            name = "ci"
+            name = "${{ env.SSH_USERNAME }}"
             groups = ["wheel"]
             key = "${PUBKEY}"
           EOF
  
       - name: Configure Podman
         shell: bash
-        run: |
+        run: | #sh
           sudo mkdir -p /etc/containers
           echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
             | sudo tee /etc/containers/storage.conf
@@ -515,7 +520,6 @@ jobs:
           else
               INPUT_ARGS+="--use-librepo=False "
           fi
-          [ -n "${ROOTFS}" ] && INPUT_ARGS+="--rootfs=${ROOTFS} "
 
           sudo podman run \
             --rm \
@@ -546,16 +550,10 @@ jobs:
           CHECKSUM_PATH=${ISO_PATH}-CHECKSUM
           echo $CHECKSUM > ${CHECKSUM_PATH}
 
-          echo "OUTPUT_DIRECTORY=$OUTPUT_DIRECTORY" >> $GITHUB_OUTPUT
-          echo "CHECKSUM=$CHECKSUM" >> $GITHUB_OUTPUT
-          echo "CHECKSUM_PATH=$CHECKSUM_PATH" >> $GITHUB_OUTPUT
-          echo "ISO_PATH=$ISO_PATH" >> $GITHUB_OUTPUT
-
           echo "output_directory=$OUTPUT_DIRECTORY" >> $GITHUB_OUTPUT
           echo "checksum=$CHECKSUM" >> $GITHUB_OUTPUT
           echo "checksum_path=$CHECKSUM_PATH" >> $GITHUB_OUTPUT
           echo "path=$ISO_PATH" >> $GITHUB_OUTPUT
-    
 
       - name: Boot QEMU (headless) with SSH forward
         env:
@@ -575,29 +573,43 @@ jobs:
             > out/qemu-console.log 2>&1 &
           echo $! > out/qemu.pid
 
-      # todo: simplify
       - name: Wait for SSH
+        env:
+          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: ${{ env.SSH_USERNAME }}
         run: | #sh
-          set -e
-          for i in {1..90}; do
-            if ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
-                  -i out/ci_ssh_key -p "2222" ci@127.0.0.1 \
-                  'echo ok' >/dev/null 2>&1; then
-              echo "SSH is up"
-              exit 0
+          SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
+          
+          wait_for_ssh_up() {
+            SSH_STATUS=$(ssh "${SSH_OPTIONS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@"${1}" '/bin/bash -c "echo -n READY"')
+            if [[ $SSH_STATUS == READY ]]; then
+              echo 1
+            else
+              echo 0
             fi
-            sleep 5
+          }
+
+          for _ in $(seq 0 30); do
+            RESULT=$(wait_for_ssh_up "localhost")
+            if [[ $RESULT == 1 ]]; then
+              echo "SSH is ready now! 🥳"
+              break
+            fi
+            sleep 10
           done
-          echo "SSH did not come up in time"
-          echo "---- QEMU console tail ----"
-          tail -n 200 out/qemu-console.log || true
-          exit 1
+
+          # Make sure VM is ready for testing
+          ssh "${SSH_OPTIONS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+            "bootc status"
 
       - name: Basic health checks (fail-fast)
         env:
           CORE_SERVICES: "sshd NetworkManager"
         run: | #sh
-          # Pass CORE_SERVICES into the remote env and run strict bash
+
           ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
               -i out/ci_ssh_key -p "2222" ci@127.0.0.1 \
               CORE_SERVICES="${CORE_SERVICES}" 'bash -seuo pipefail' <<'EOSSH'
