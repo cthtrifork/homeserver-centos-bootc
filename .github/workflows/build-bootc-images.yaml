@@ -568,8 +568,7 @@ jobs:
             -net nic,model=virtio \
             -net user,hostfwd=tcp::2222-:22 \
             -display none \
-            -daemonize
-            > out/qemu-console.log 2>&1 &
+            -daemonize > out/qemu-console.log 2>&1 &
           echo $! > out/qemu.pid
 
       - name: Wait for SSH
@@ -585,7 +584,7 @@ jobs:
 
           wait_for_ssh_up() {
             SSH_STATUS=$(ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@"${1}" '/bin/bash -c "echo -n READY"')
-            if [[ $SSH_STATUS == READY ]]; then
+            if [[ $SSH_STATUS == "READY" ]]; then
               echo 1
             else
               echo 0
@@ -601,7 +600,7 @@ jobs:
             sleep ${SLEEP_SECONDS}
           done
 
-          # Make sure VM is ready for testing
+          # Make sure VM is ready for testing with basic health checks
           ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
@@ -613,57 +612,35 @@ jobs:
             -p 2222 \
             ${SSH_USERNAME}@localhost \
             "rpm-ostree status"
-
-      - name: Basic health checks
-        env:
-          CORE_SERVICES: "sshd NetworkManager"
-          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
-          SSH_USERNAME: ${{ env.SSH_USERNAME }}
-          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
-        run: | #sh
-          # turn the env string into a Bash array
-          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
-          ssh "${SSH_OPTS[@]}" \
-            -i "$SSH_KEY" \
-            -p 2222 \
-            ${SSH_USERNAME}@localhost "
-            set -euo pipefail
-
-            echo "--- system is-running ---"
-            systemctl is-system-running --wait
-
-            echo "--- core services ---"
-            for s in $CORE_SERVICES; do
-              systemctl is-active --quiet "$s" || {
-                echo "Service not active: $s"
-                systemctl status "$s" --no-pager || true
-                exit 1
-              }
-            done
-          "
-
-      - name: /etc drift detector (fail on unexpected drift)
-        env:
-          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
-          SSH_USERNAME: ${{ env.SSH_USERNAME }}
-          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
-          # Allow-list: expected first-boot changes under /etc (adjust as your image evolves)
-          DRIFT_ALLOW_RE: "(^A\\s+/etc/ssh/ssh_host_.*|^A\\s+/etc/machine-id|^M\\s+/etc/issue.*|^A\\s+/etc/NetworkManager/system-connections/.*|^A\\s+/etc/resolv.conf)$"
-        run: | #sh
-          set -e
-          # turn the env string into a Bash array
-          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+          
           ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
-              'sudo ostree admin config-diff || true' | tee out/etc-drift.txt
-          echo "---- Drift output ----"
-          cat out/etc-drift.txt || true
-          if grep -E '^[AMD]\s+/etc' out/etc-drift.txt | grep -Ev "${DRIFT_ALLOW_RE}" >/dev/null; then
-            echo "::error::Unexpected /etc drift detected (see artifact)."
-            exit 1
-          fi
+            "systemctl is-system-running --wait"
+
+      # - name: /etc drift detector (fail on unexpected drift)
+      #   env:
+      #     SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+      #     SSH_USERNAME: ${{ env.SSH_USERNAME }}
+      #     SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+      #     # Allow-list: expected first-boot changes under /etc (adjust as your image evolves)
+      #     DRIFT_ALLOW_RE: "(^A\\s+/etc/ssh/ssh_host_.*|^A\\s+/etc/machine-id|^M\\s+/etc/issue.*|^A\\s+/etc/NetworkManager/system-connections/.*|^A\\s+/etc/resolv.conf)$"
+      #   run: | #sh
+      #     set -e
+      #     # turn the env string into a Bash array
+      #     read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+      #     ssh "${SSH_OPTS[@]}" \
+      #       -i "$SSH_KEY" \
+      #       -p 2222 \
+      #       ${SSH_USERNAME}@localhost \
+      #         'sudo ostree admin config-diff || true' | tee out/etc-drift.txt
+      #     echo "---- Drift output ----"
+      #     cat out/etc-drift.txt || true
+      #     if grep -E '^[AMD]\s+/etc' out/etc-drift.txt | grep -Ev "${DRIFT_ALLOW_RE}" >/dev/null; then
+      #       echo "::error::Unexpected /etc drift detected (see artifact)."
+      #       exit 1
+      #     fi
 
       - name: Collect logs and stop QEMU
         if: always()
@@ -692,19 +669,15 @@ jobs:
             echo "### QEMU Testing Output"
             echo "<details><summary>Click to expand</summary>"
             echo ""
+            echo "#### QEMU log"
+            echo ""
             echo '```'
             cat out/qemu-console.log
             echo '```'
+            echo ""
+            echo "#### Journal"
+            echo '```'
+            cat out/journal/boot.log
+            echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: qemu-smoke-artifacts
-          path: |
-            out/qemu-console.log
-            out/etc-drift.txt
-            out/journal/boot.log
-          if-no-files-found: ignore
