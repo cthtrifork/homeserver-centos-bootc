@@ -551,6 +551,12 @@ jobs:
           echo "CHECKSUM_PATH=$CHECKSUM_PATH" >> $GITHUB_OUTPUT
           echo "ISO_PATH=$ISO_PATH" >> $GITHUB_OUTPUT
 
+          echo "output_directory=$OUTPUT_DIRECTORY" >> $GITHUB_OUTPUT
+          echo "checksum=$CHECKSUM" >> $GITHUB_OUTPUT
+          echo "checksum_path=$CHECKSUM_PATH" >> $GITHUB_OUTPUT
+          echo "path=$ISO_PATH" >> $GITHUB_OUTPUT
+    
+
       - name: Boot QEMU (headless) with SSH forward
         env:
           DISK: ${{ steps.create-vmdk.outputs.output-path }}
