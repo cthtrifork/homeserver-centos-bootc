@@ -606,7 +606,7 @@ jobs:
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
-            "bootc status"
+            "sudo bootc status"
 
           ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
@@ -618,7 +618,9 @@ jobs:
         env:
           CORE_SERVICES: "sshd NetworkManager"
         run: | #sh
-         ssh "${SSH_OPTIONS}" \
+          # turn the env string into a Bash array
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+          ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost "
@@ -643,7 +645,9 @@ jobs:
             DRIFT_ALLOW_RE: "(^A\\s+/etc/ssh/ssh_host_.*|^A\\s+/etc/machine-id|^M\\s+/etc/issue.*|^A\\s+/etc/NetworkManager/system-connections/.*|^A\\s+/etc/resolv.conf)$"
         run: | #sh
           set -e
-          ssh "${SSH_OPTIONS}" \
+          # turn the env string into a Bash array
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+          ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
@@ -660,7 +664,9 @@ jobs:
         run: | #sh
           mkdir -p out/journal
           # Journal
-          ssh "${SSH_OPTIONS}" \
+          # turn the env string into a Bash array
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+          ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
