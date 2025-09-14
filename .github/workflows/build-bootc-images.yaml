@@ -475,13 +475,14 @@ jobs:
       - name: Write bootc-image-builder user config (SSH access)
         run: |
           set -e
-          cat > out/config.toml <<'EOF'
-          [[customizations.user]]
-          name = "${{ env.SSH_USERNAME }}"
-          password = ""
-          key = "${PUBKEY}"
-          groups = ["wheel"]
-          EOF
+          {
+            echo '[[customizations.user]]'
+            echo "name = \"${{ env.SSH_USERNAME }}\""
+            echo 'password = ""'
+            echo "key = \"${PUBKEY}\""
+            echo 'groups = ["wheel"]'
+          } > out/config.toml
+
           cat ./out/config.toml
  
       - name: Configure Podman
