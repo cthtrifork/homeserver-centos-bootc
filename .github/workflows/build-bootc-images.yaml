@@ -435,7 +435,7 @@ jobs:
       id-token: write
       pull-requests: write
     env:
-      SSH_USERNAME: ci
+      SSH_USERNAME: runner
       SSH_OPTIONS: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
     steps:
       - name: Download PR image
@@ -580,8 +580,11 @@ jobs:
           SLEEP_SECONDS: 10
           RETRIES: 10
         run: | #sh
+          # turn the env string into a Bash array
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+
           wait_for_ssh_up() {
-            SSH_STATUS=$(ssh "${SSH_OPTIONS}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@"${1}" '/bin/bash -c "echo -n READY"')
+            SSH_STATUS=$(ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@"${1}" '/bin/bash -c "echo -n READY"')
             if [[ $SSH_STATUS == READY ]]; then
               echo 1
             else
@@ -599,13 +602,13 @@ jobs:
           done
 
           # Make sure VM is ready for testing
-          ssh "${SSH_OPTIONS}" \
+          ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
             "bootc status"
 
-          ssh "${SSH_OPTIONS}" \
+          ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
