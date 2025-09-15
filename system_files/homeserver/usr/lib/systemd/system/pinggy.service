@@ -1,8 +1,11 @@
 # https://pinggy.io/docs/run_tunnel_on_startup/linux/
 [Unit]
 Description=Pinggy Tunnel Startup
+Wants=network-online.target
+After=network-online.target
 
 [Service]
+Type=simple
 EnvironmentFile=/etc/homeserver/metadata/pinggy
 ExecStart=/usr/libexec/pinggy
 Restart=on-failure
