@@ -2,18 +2,18 @@
 FROM scratch AS ctx
 COPY / /
 
-FROM quay.io/centos-bootc/centos-bootc:stream10
+FROM quay.io/centos-bootc/centos-bootc:stream10@sha256:42fc456c6eeee3aa999c320febeaf33f62c9f0e50a37acdece90c3b264ac4bc1
 
 #setup sudo to not require password
 RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-sudo
 
 # Write some metadata
-RUN echo VARIANT="CoreDNS bootc OS" && echo VARIANT_ID=com.github.caspertdk.homeserver-bootc >> /usr/lib/os-release
+RUN echo VARIANT="HomeServer bootc OS" && echo VARIANT_ID=com.github.caspertdk.homeserver-bootc >> /usr/lib/os-release
 
 # Registry auth
-ARG REGISTRY_TOKEN="notset"
-ARG REGISTRY_URL="notset"
-ARG REGISTRY_USERNAME="someuser"
+ARG REGISTRY_TOKEN
+ARG REGISTRY_URL
+ARG REGISTRY_USERNAME
 
 RUN --mount=type=secret,id=creds,required=true cp /run/secrets/creds /usr/lib/container-auth.json && \
     chmod 0600 /usr/lib/container-auth.json && \
@@ -29,11 +29,13 @@ RUN dnf -y install 'dnf-command(config-manager)'
 # pip3 dependencies
 RUN pip3 install glances
 
+ARG PINGGY_HOST
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     #--mount=type=cache,dst=/var/cache \
     #--mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \
     --mount=type=secret,id=pinggy_token,required=true PINGGY_TOKEN="$(cat /run/secrets/pinggy_token)" \
+    PINGGY_HOST="${PINGGY_HOST}" \
     /ctx/build_files/build.sh
 
 # Networking
