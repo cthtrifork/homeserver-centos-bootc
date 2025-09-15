@@ -13,7 +13,7 @@ RUN echo VARIANT="HomeServer bootc OS" && echo VARIANT_ID=com.github.caspertdk.h
 # Registry auth
 ARG REGISTRY_TOKEN
 ARG REGISTRY_URL
-ARG REGISTRY_USERNAME=
+ARG REGISTRY_USERNAME
 
 RUN --mount=type=secret,id=creds,required=true cp /run/secrets/creds /usr/lib/container-auth.json && \
     chmod 0600 /usr/lib/container-auth.json && \
