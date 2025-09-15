@@ -4,6 +4,7 @@
 GROUP_SETUP_VER=1
 mkdir -p /etc/homeserver
 GROUP_SETUP_VER_FILE="/etc/homeserver/dx-groups"
+touch "$GROUP_SETUP_VER_FILE"
 GROUP_SETUP_VER_RAN=$(cat "$GROUP_SETUP_VER_FILE")
 
 # Run script if updated

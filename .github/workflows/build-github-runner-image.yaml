@@ -6,11 +6,9 @@ on:
   pull_request:
     branches:
       - main
+    paths:
+      - github-runner.containerfile
   push:
-    #    paths:
-    #      - "Containerfile"
-    #      - "config.toml"
-    #      - ".github/workflows/build-bootc-images.yaml"
     branches:
       - main
     paths:
