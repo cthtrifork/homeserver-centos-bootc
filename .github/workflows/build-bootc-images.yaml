@@ -110,7 +110,7 @@ jobs:
           printf '%s' "${TOKEN}" > /tmp/REGISTRY_TOKEN
           chmod 600 /tmp/REGISTRY_TOKEN
 
-          printf '%s' "${{ vars.PINGGY_TOKEN }}" > /tmp/PINGGY_TOKEN
+          printf '%s' "${{ secrets.PINGGY_TOKEN }}" > /tmp/PINGGY_TOKEN
           chmod 600 /tmp/PINGGY_TOKEN
 
           cp "${HOME}/.docker/config.json" /tmp/creds
@@ -129,7 +129,7 @@ jobs:
           build-args: |
             REGISTRY_USERNAME="${{ github.repository_owner }}"
             REGISTRY_URL=ghcr.io
-            PINGGY_HOST={{ secrets.PINGGY_HOST || 'pinggy.io' }}
+            PINGGY_HOST={{ vars.PINGGY_HOST }}
           containerfiles: |
             ${{ env.CONTEXT }}/Containerfile
           extra-args: |
