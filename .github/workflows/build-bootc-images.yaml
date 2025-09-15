@@ -695,6 +695,7 @@ jobs:
           echo quit | sudo socat - unix-connect:/tmp/qemu-monitor-sock
 
       - name: Publish Output to summary
+        if: always()
         run: | #sh
           {
             echo "### QEMU Testing Output"
