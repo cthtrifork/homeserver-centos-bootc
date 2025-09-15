@@ -12,7 +12,10 @@ log() {
 rsync -rvpK /ctx/system_files/homeserver/ /
 
 mkdir -p /etc/homeserver/metadata/
-echo "PINGGY_TOKEN=$PINGGY_TOKEN" > /etc/homeserver/metadata/pinggy
+touch /etc/homeserver/metadata/pinggy
+echo "PINGGY_TOKEN=$PINGGY_TOKEN" >> /etc/homeserver/metadata/pinggy
+echo "PINGGY_HOST=$PINGGY_HOST" >> /etc/homeserver/metadata/pinggy
+chmod 600 /etc/homeserver/metadata/pinggy # todo: consider systemd credentials
 
 /ctx/build_files/github-cli.sh
 /ctx/build_files/server-docker-ce.sh

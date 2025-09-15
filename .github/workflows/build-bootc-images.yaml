@@ -35,7 +35,7 @@ jobs:
     name: Build image
     runs-on: ubuntu-latest
     continue-on-error: false
-    environment: ${{ github.event_name == 'pull_request' && 'dev' || 'prod' }}
+    environment: ${{ "${GITHUB_REF}" == "refs/heads/main" && 'prod' || 'dev' }}
     timeout-minutes: 10
     outputs:
       image: ${{ steps.build-image.outputs.image }}
@@ -54,7 +54,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.PAT_PULL || secrets.PAT_RENOVATEBOT }}
+          password: ${{ secrets.PAT_RENOVATEBOT }}
 
       - name: Load image
         shell: bash
@@ -102,7 +102,7 @@ jobs:
         shell: bash
         run: |
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" || "${GITHUB_REF}" != "refs/heads/main" ]]; then
-            TOKEN="${{ secrets.GITHUB_TOKEN }}" # JIT PR builds use GITHUB_TOKEN
+            TOKEN="${{ secrets.GITHUB_TOKEN }}" # JIT PR builds should use GITHUB_TOKEN
           else
             TOKEN="${{ secrets.PAT_RENOVATEBOT }}"
           fi
@@ -129,6 +129,7 @@ jobs:
           build-args: |
             REGISTRY_USERNAME="${{ github.repository_owner }}"
             REGISTRY_URL=ghcr.io
+            PINGGY_HOST={{ secrets.PINGGY_HOST || 'pinggy.io' }}
           containerfiles: |
             ${{ env.CONTEXT }}/Containerfile
           extra-args: |
@@ -646,10 +647,10 @@ jobs:
         run: | #sh
           # turn the env string into a Bash array
           read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
-          ssh "${SSH_OPTS[@]}" \
+          cat ./tests/healthcheck.sh | ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
-            ${SSH_USERNAME}@localhost 'bash -s' < cat ./tests/healthcheck.sh
+            ${SSH_USERNAME}@localhost
 
       # - name: /etc drift detector (fail on unexpected drift)
       #   env:
