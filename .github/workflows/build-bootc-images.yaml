@@ -110,7 +110,7 @@ jobs:
           printf '%s' "${TOKEN}" > /tmp/REGISTRY_TOKEN
           chmod 600 /tmp/REGISTRY_TOKEN
 
-          printf '%s' "${{ secrets.PINGGY_TOKEN }}" > /tmp/PINGGY_TOKEN
+          printf '%s' "${{ vars.PINGGY_TOKEN }}" > /tmp/PINGGY_TOKEN
           chmod 600 /tmp/PINGGY_TOKEN
 
           cp "${HOME}/.docker/config.json" /tmp/creds
@@ -476,7 +476,7 @@ jobs:
         run: |
           set -e
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends qemu-system-x86 qemu-utils podman jq
+          sudo apt-get install -y --no-install-recommends -qq socat qemu-system-x86 qemu-utils podman jq
 
       - name: Generate ephemeral SSH keypair
         id: ssh-key
