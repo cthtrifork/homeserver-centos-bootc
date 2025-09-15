@@ -129,7 +129,7 @@ jobs:
           build-args: |
             REGISTRY_USERNAME="${{ github.repository_owner }}"
             REGISTRY_URL=ghcr.io
-            PINGGY_HOST={{ vars.PINGGY_HOST }}
+            PINGGY_HOST=${{ vars.PINGGY_HOST }}
           containerfiles: |
             ${{ env.CONTEXT }}/Containerfile
           extra-args: |
