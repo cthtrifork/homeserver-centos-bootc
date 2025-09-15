@@ -36,7 +36,7 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     #--mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \
     --mount=type=secret,id=pinggy_token,required=true PINGGY_TOKEN="$(cat /run/secrets/pinggy_token)" \
-    PINGGY_HOST="${PINGGY_HOST:-a.pinggy.io}" \
+    PINGGY_HOST="${PINGGY_HOST}" \
     /ctx/build_files/build.sh
 
 # Networking
