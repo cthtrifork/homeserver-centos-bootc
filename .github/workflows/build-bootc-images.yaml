@@ -568,8 +568,8 @@ jobs:
             -net nic,model=virtio \
             -net user,hostfwd=tcp::2222-:22 \
             -display none \
-            -daemonize > out/qemu-console.log 2>&1 &
-          echo $! > out/qemu.pid
+            -monitor unix:/tmp/qemu-monitor-sock,server,nowait \
+            -daemonize > out/qemu-console.log 2>&1
 
       - name: Wait for SSH
         env:
@@ -601,17 +601,26 @@ jobs:
           done
 
           # Make sure VM is ready for testing
+          echo "--- system is-running ---"
           ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
             "sudo bootc status"
 
+          echo "--- system is-running ---"
           ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
             "rpm-ostree status"
+
+          echo "--- system is-running ---"
+          ssh "${SSH_OPTS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+            "systemctl is-system-running --wait"
           
       - name: Basic health checks
         env:
@@ -625,22 +634,7 @@ jobs:
           ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
-            ${SSH_USERNAME}@localhost "
-            set -euo pipefail
-
-            echo '--- system is-running ---'
-            systemctl is-system-running --wait
-
-            ALL_SERVICES=$(systemctl list-unit-files --type=service --state=enabled --no-legend | awk '{print $1}' | grep -v '@\.service$')
-            echo '--- core services ---'
-            for s in $CORE_SERVICES; do
-              systemctl is-active --quiet $s || {
-                echo 'Service not active: $s'
-                systemctl status '$s' --no-pager || true
-                exit 1
-              }
-            done
-          "
+            ${SSH_USERNAME}@localhost 'bash -s' < tests/healthcheck.sh
 
       # - name: /etc drift detector (fail on unexpected drift)
       #   env:
@@ -682,9 +676,7 @@ jobs:
             ${SSH_USERNAME}@localhost \
               'sudo journalctl -b --no-pager -o short-precise | tail -n +1' > out/journal/boot.log || true
           # Stop QEMU
-          if [ -f out/qemu.pid ]; then
-            kill -TERM "$(cat out/qemu.pid)" || true
-          fi
+          echo quit | socat - unix-connect:/tmp/qemu-monitor-sock
 
       - name: Publish Output to summary
         run: | #sh
