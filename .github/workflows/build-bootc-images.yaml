@@ -102,19 +102,17 @@ jobs:
         shell: bash
         run: |
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" || "${GITHUB_REF}" != "refs/heads/main" ]]; then
-            TOKEN="${{ secrets.GITHUB_TOKEN }}" # JIT PR builds should use GITHUB_TOKEN
+            echo "${{ secrets.GITHUB_TOKEN }}" > /tmp/REGISTRY_TOKEN
+            echo "" > /tmp/PINGGY_TOKEN
           else
-            TOKEN="${{ secrets.PAT_RENOVATEBOT }}"
+            echo "${{ secrets.PAT_RENOVATEBOT }}" > /tmp/REGISTRY_TOKEN
+            echo "${{ secrets.PINGGY_TOKEN }}" > /tmp/PINGGY_TOKEN
           fi
-
-          printf '%s' "${TOKEN}" > /tmp/REGISTRY_TOKEN
-          chmod 600 /tmp/REGISTRY_TOKEN
-
-          printf '%s' "${{ secrets.PINGGY_TOKEN }}" > /tmp/PINGGY_TOKEN
-          chmod 600 /tmp/PINGGY_TOKEN
 
           cp "${HOME}/.docker/config.json" /tmp/creds
           chmod 600 /tmp/creds
+          chmod 600 /tmp/REGISTRY_TOKEN
+          chmod 600 /tmp/PINGGY_TOKEN
 
       - name: Use buildah build to create the image
         id: build-image
