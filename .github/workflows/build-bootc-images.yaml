@@ -6,13 +6,13 @@ on:
   pull_request:
     branches:
       - main
-  push:
     paths:
       - "Containerfile"
       - "config.toml"
       - "system_files/homeserver/"
       - "build_files/"
       - ".github/workflows/build-bootc-images.yaml"
+  push:
     branches:
       - main
 concurrency:
@@ -35,6 +35,7 @@ jobs:
     name: Build image
     runs-on: ubuntu-latest
     continue-on-error: false
+    environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     timeout-minutes: 10
     outputs:
       image: ${{ steps.build-image.outputs.image }}
@@ -53,7 +54,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.PAT_PULL || secrets.PAT_RENOVATEBOT }}
+          password: ${{ secrets.PAT_RENOVATEBOT }}
 
       - name: Load image
         shell: bash
@@ -98,11 +99,20 @@ jobs:
 
       # Write secrets to temp files for --secret src=
       - name: Prepare build secrets
+        shell: bash
         run: |
-          umask 077
-          printf '%s' "${{ secrets.PAT_RENOVATEBOT }}" > /tmp/REGISTRY_TOKEN
-          printf '%s' "${{ secrets.PINGGY_TOKEN }}" > /tmp/PINGGY_TOKEN
-          cp ${HOME}/.docker/config.json /tmp/creds
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" || "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            echo "${{ secrets.GITHUB_TOKEN }}" > /tmp/REGISTRY_TOKEN
+            echo "" > /tmp/PINGGY_TOKEN
+          else
+            echo "${{ secrets.PAT_RENOVATEBOT }}" > /tmp/REGISTRY_TOKEN
+            echo "${{ secrets.PINGGY_TOKEN }}" > /tmp/PINGGY_TOKEN
+          fi
+
+          cp "${HOME}/.docker/config.json" /tmp/creds
+          chmod 600 /tmp/creds
+          chmod 600 /tmp/REGISTRY_TOKEN
+          chmod 600 /tmp/PINGGY_TOKEN
 
       - name: Use buildah build to create the image
         id: build-image
@@ -117,6 +127,7 @@ jobs:
           build-args: |
             REGISTRY_USERNAME="${{ github.repository_owner }}"
             REGISTRY_URL=ghcr.io
+            PINGGY_HOST=${{ vars.PINGGY_HOST }}
           containerfiles: |
             ${{ env.CONTEXT }}/Containerfile
           extra-args: |
@@ -424,7 +435,6 @@ jobs:
           category: trivy
 
   test:
-    environment: dev
     runs-on: ubuntu-latest
     needs: build-bootc-image
     if: ${{ github.event_name == 'pull_request' }}
@@ -435,7 +445,13 @@ jobs:
       packages: read
       id-token: write
       pull-requests: write
+    env:
+      SSH_USERNAME: runner
+      SSH_OPTIONS: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
     steps:
+      - name: Clone the repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
       - name: Download PR image
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
@@ -452,43 +468,246 @@ jobs:
       - name: Load PR image
         shell: bash
         run: | #sh
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
-          podman load -q -i ${{ github.workspace }}/pr-image.tar.gz
-          podman images
+          sudo podman load -q -i ${{ github.workspace }}/pr-image.tar.gz
 
-      - name: Run container with safe privileges for testing
+      - name: Install deps (qemu, podman, jq)
         run: |
-          # Start in background to allow exec steps
-          podman run --rm -d \
-            --name bootc-test \
+          set -e
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends -qq socat qemu-system-x86 qemu-utils podman jq
+
+      - name: Generate ephemeral SSH keypair
+        id: ssh-key
+        run: | #sh
+          set -e
+          mkdir -p out
+          ssh-keygen -t ed25519 -N "" -f out/ci_ssh_key
+          echo "PUBKEY=$(cat out/ci_ssh_key.pub)" >> $GITHUB_ENV
+
+          echo "ssh_key=./out/ci_ssh_key" >> $GITHUB_OUTPUT
+
+      - name: Write bootc-image-builder user config (SSH access)
+        run: |
+          set -e
+          {
+            echo '[[customizations.user]]'
+            echo "name = \"${{ env.SSH_USERNAME }}\""
+            echo 'password = ""'
+            echo "key = \"${PUBKEY}\""
+            echo 'groups = ["wheel"]'
+          } > out/config.toml
+
+          cat ./out/config.toml
+ 
+      - name: Configure Podman
+        shell: bash
+        run: | #sh
+          sudo mkdir -p /etc/containers
+          echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
+            | sudo tee /etc/containers/storage.conf
+
+          # workaround https://github.com/containers/podman/issues/21683
+          sudo apt install -y sqlite3
+          echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
+
+      # https://github.com/bootc-dev/bootc/blob/main/tests/build.sh
+      - name: Build Bootable Image
+        id: create-vmdk
+        shell: bash
+        env:
+          CONFIG_FILE: ./out/config.toml
+          IMAGE: ${{ env.PR_IMAGE }}
+          BOOTC_IMAGE_BUILDER_IMAGE: quay.io/centos-bootc/bootc-image-builder:latest
+          USE_LIBREPO: false
+          IMAGE_TYPE: qcow2
+          ROOTFS: xfs
+        run: | #sh
+          DESIRED_UID=$(id -u)
+          DESIRED_GID=$(id -g)
+
+          mkdir -p ./output
+
+          INPUT_ARGS=""
+          if [ "${USE_LIBREPO}" == "true" ]; then
+              INPUT_ARGS+="--use-librepo=True "
+          else
+              INPUT_ARGS+="--use-librepo=False "
+          fi
+
+          sudo podman run \
+            --rm \
             --privileged \
-            --userns=auto \
-            -v /sys:/sys:ro \
-            ${{ env.PR_IMAGE }} bash -lc 'sleep 600'
+            --pull=newer \
+            --security-opt label=type:unconfined_t \
+            -v ${CONFIG_FILE}:/config.toml:ro \
+            -v ./output:/output \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
+            ${BOOTC_IMAGE_BUILDER_IMAGE} \
+            --type ${IMAGE_TYPE} \
+            --local \
+            --chown $DESIRED_UID:$DESIRED_GID \
+            ${INPUT_ARGS} \
+            $IMAGE
 
-      - name: Inspect bootc bits and os-release
-        run: |
-          podman exec bootc-test bash -lc '
-            echo "=== os-release ==="; cat /etc/os-release || true
-            echo "=== bootc version ==="; bootc --version || true
-            echo "=== rpm sanity ==="; rpm -qa | wc -l || true
-          '
+          case "${IMAGE_TYPE}" in
+          "raw"|"ami") OUTPUT_DIRECTORY="./output/image" ;;
+          "iso") OUTPUT_DIRECTORY="./output/bootiso" ;;
+          "vhd") OUTPUT_DIRECTORY="./output/vpc" ;;
+          *) OUTPUT_DIRECTORY="./output/${IMAGE_TYPE}" ;;
+          esac
 
-      - name: bootc status (should print tree/image info)
-        run: |
-          podman exec bootc-test bash -lc 'bootc status || true'
+          ISO_PATH=(${OUTPUT_DIRECTORY}/*)
 
-      - name: Systemd presence sanity
-        run: |
-          podman exec bootc-test bash -lc '
-            command -v systemctl || true
-            test -x /sbin/init && echo "/sbin/init present"
-          '
+          # Create a checksum of the output file, stored in the same directory
+          CHECKSUM=$(sha256sum $ISO_PATH | awk '{print $1}')
+          CHECKSUM_PATH=${ISO_PATH}-CHECKSUM
+          echo $CHECKSUM > ${CHECKSUM_PATH}
 
-      - name: Stop test container
+          echo "output_directory=$OUTPUT_DIRECTORY" >> $GITHUB_OUTPUT
+          echo "checksum=$CHECKSUM" >> $GITHUB_OUTPUT
+          echo "checksum_path=$CHECKSUM_PATH" >> $GITHUB_OUTPUT
+          echo "path=$ISO_PATH" >> $GITHUB_OUTPUT
+
+      - name: Boot QEMU (headless) with SSH forward
+        env:
+          DISK: ${{ steps.create-vmdk.outputs.path }}
+        run: | #sh
+          set -e
+          sudo qemu-system-x86_64 \
+            -name bootc-vm \
+            -enable-kvm \
+            -cpu host \
+            -m 2G \
+            -drive if=virtio,file="${DISK}",format=qcow2 \
+            -net nic,model=virtio \
+            -net user,hostfwd=tcp::2222-:22 \
+            -display none \
+            -monitor unix:/tmp/qemu-monitor-sock,server,nowait \
+            -daemonize > out/qemu-console.log 2>&1
+
+      - name: Wait for SSH
+        env:
+          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+          SLEEP_SECONDS: 10
+          RETRIES: 10
+        run: | #sh
+          # turn the env string into a Bash array
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+
+          wait_for_ssh_up() {
+            SSH_STATUS=$(ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@"${1}" '/bin/bash -c "echo -n READY"')
+            if [[ $SSH_STATUS == "READY" ]]; then
+              echo 1
+            else
+              echo 0
+            fi
+          }
+
+          for _ in $(seq 0 ${RETRIES}); do
+            RESULT=$(wait_for_ssh_up "localhost")
+            if [[ $RESULT == 1 ]]; then
+              echo "SSH is ready now! 🥳"
+              break
+            fi
+            sleep ${SLEEP_SECONDS}
+          done
+
+          # Make sure VM is ready for testing
+          echo "--- system is-running ---"
+          ssh "${SSH_OPTS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+            "sudo bootc status"
+
+          echo "--- system is-running ---"
+          ssh "${SSH_OPTS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+            "rpm-ostree status"
+
+          echo "--- system is-running ---"
+          ssh "${SSH_OPTS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+            "systemctl is-system-running --wait"
+          
+      - name: Basic health checks
+        env:
+          CORE_SERVICES: "sshd NetworkManager"
+          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        run: | #sh
+          # turn the env string into a Bash array
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+          cat ./tests/healthcheck.sh | ssh "${SSH_OPTS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost
+
+      # - name: /etc drift detector (fail on unexpected drift)
+      #   env:
+      #     SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+      #     SSH_USERNAME: ${{ env.SSH_USERNAME }}
+      #     SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+      #     # Allow-list: expected first-boot changes under /etc (adjust as your image evolves)
+      #     DRIFT_ALLOW_RE: "(^A\\s+/etc/ssh/ssh_host_.*|^A\\s+/etc/machine-id|^M\\s+/etc/issue.*|^A\\s+/etc/NetworkManager/system-connections/.*|^A\\s+/etc/resolv.conf)$"
+      #   run: | #sh
+      #     set -e
+      #     # turn the env string into a Bash array
+      #     read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+      #     ssh "${SSH_OPTS[@]}" \
+      #       -i "$SSH_KEY" \
+      #       -p 2222 \
+      #       ${SSH_USERNAME}@localhost \
+      #         'sudo ostree admin config-diff || true' | tee out/etc-drift.txt
+      #     echo "---- Drift output ----"
+      #     cat out/etc-drift.txt || true
+      #     if grep -E '^[AMD]\s+/etc' out/etc-drift.txt | grep -Ev "${DRIFT_ALLOW_RE}" >/dev/null; then
+      #       echo "::error::Unexpected /etc drift detected (see artifact)."
+      #       exit 1
+      #     fi
+
+      - name: Collect logs and stop QEMU
         if: always()
-        run: podman rm -f bootc-test || true
+        env:
+          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        run: | #sh
+          mkdir -p out/journal
+          # Journal
+          # turn the env string into a Bash array
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+          ssh "${SSH_OPTS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+              'sudo journalctl -b --no-pager -o short-precise | tail -n +1' > out/journal/boot.log || true
+          # Stop QEMU
+          echo quit | sudo socat - unix-connect:/tmp/qemu-monitor-sock
 
-
-
+      - name: Publish Output to summary
+        if: always()
+        run: | #sh
+          {
+            echo "### QEMU Testing Output"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo "#### QEMU log"
+            echo ""
+            echo '```'
+            cat out/qemu-console.log
+            echo '```'
+            echo ""
+            echo "#### Journal"
+            echo '```'
+            cat out/journal/boot.log
+            echo '```'
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
