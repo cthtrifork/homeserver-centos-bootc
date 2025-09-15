@@ -35,6 +35,7 @@ jobs:
     name: Build image
     runs-on: ubuntu-latest
     continue-on-error: false
+    environment: ${{ github.event_name == 'pull_request' && 'dev' || 'prod' }}
     timeout-minutes: 10
     outputs:
       image: ${{ steps.build-image.outputs.image }}
@@ -98,11 +99,22 @@ jobs:
 
       # Write secrets to temp files for --secret src=
       - name: Prepare build secrets
+        shell: bash
         run: |
-          umask 077
-          printf '%s' "${{ secrets.PAT_RENOVATEBOT }}" > /tmp/REGISTRY_TOKEN
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" || "${GITHUB_REF}" != "refs/heads/main" ]]; then
+            TOKEN="${{ secrets.GITHUB_TOKEN }}" # JIT PR builds use GITHUB_TOKEN
+          else
+            TOKEN="${{ secrets.PAT_RENOVATEBOT }}"
+          fi
+
+          printf '%s' "${TOKEN}" > /tmp/REGISTRY_TOKEN
+          chmod 600 /tmp/REGISTRY_TOKEN
+
           printf '%s' "${{ secrets.PINGGY_TOKEN }}" > /tmp/PINGGY_TOKEN
-          cp ${HOME}/.docker/config.json /tmp/creds
+          chmod 600 /tmp/PINGGY_TOKEN
+
+          cp "${HOME}/.docker/config.json" /tmp/creds
+          chmod 600 /tmp/creds
 
       - name: Use buildah build to create the image
         id: build-image
