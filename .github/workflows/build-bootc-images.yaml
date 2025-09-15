@@ -1,33 +1,39 @@
 name: Build homeserver bootable container image
+
 on:
   schedule:
-    - cron: "0 3 * * 0" # Runs at 03:00, only on Sunday for security patching
+    - cron: "0 3 * * 0" # 03:00 UTC Sundays
   workflow_dispatch:
   pull_request:
-    branches:
-      - main
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
     paths:
       - "Containerfile"
       - "config.toml"
-      - "system_files/homeserver/"
-      - "build_files/"
+      - "system_files/homeserver/**"
+      - "build_files/**"
       - ".github/workflows/build-bootc-images.yaml"
   push:
-    branches:
-      - main
+    branches: [main]
+    paths:
+      - "Containerfile"
+      - "config.toml"
+      - "system_files/homeserver/**"
+      - "build_files/**"
+      - ".github/workflows/build-bootc-images.yaml"
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 
 env:
   IMAGE_DESC: "${{ github.event.repository.description }}"
-  #IMAGE_LOGO_URL: "https://raw.githubusercontent.com/astrovm/amyos/main/repo_files/amy-logo-white.png" # Put your own image here for a fancy profile on https://artifacthub.io/!
-  REPO_NAME: "${{ github.event.repository.name }}" # output image name, usually same as repo name
-  IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}" # do not edit
+  REPO_NAME: "${{ github.event.repository.name }}"
+  IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"
   DEFAULT_TAG: "latest"
   IMAGE_NAME: homeserver-centos-bootc
   BASE_IMAGE: ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest
-  PR_IMAGE: localhost/homeserver-centos-bootc:latest # this should work when the image has been built
+  PR_IMAGE: localhost/homeserver-centos-bootc:latest
   CONTEXT: ./
 
 jobs:
@@ -37,6 +43,7 @@ jobs:
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     timeout-minutes: 10
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     outputs:
       image: ${{ steps.build-image.outputs.image }}
       tags: ${{ steps.build-image.outputs.tags }}
@@ -46,75 +53,53 @@ jobs:
       id-token: write
 
     steps:
-      - name: Clone the repository
+      - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
-      - name: Log in to the Container registry
+      - name: Login to GHCR (prefer GITHUB_TOKEN)
         uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.PAT_RENOVATEBOT }}
+          password: ${{ secrets.GITHUB_TOKEN || secrets.PAT_RENOVATEBOT }}
 
-      - name: Load image
-        shell: bash
-        run: |
-          podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
+      - name: Pull last image for cache (best-effort)
+        run: podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest || true
 
-      - name: Get current date
-        id: date
-        run: |
-          # This generates a timestamp like
-          # 2022-02-08T15:38:15Z
-          # https://linux.die.net/man/1/date
-          echo "date=$(date -u +%Y\-%m\-%d\T%H\:%M\:%S\Z)" >> $GITHUB_OUTPUT
-
-      - name: Image Metadata
-        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5
+      - name: Image metadata (lean tags)
         id: metadata
+        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5
         with:
-          # This generates all the tags for your image, you can add custom tags here too!
-          # Default tags are "$DEFAULT_TAG" and "$DEFAULT_TAG.$date".
           tags: |
             type=raw,value=${{ env.DEFAULT_TAG }}
-            type=raw,value=0.1.${{ github.run_number }}
-            type=raw,value=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
             type=raw,value={{date 'YYYYMMDD'}}
             type=sha,enable=${{ github.event_name == 'pull_request' }}
             type=ref,event=pr
           labels: |
-            org.opencontainers.image.created=${{ steps.date.outputs.date }}
             org.opencontainers.image.description=${{ env.IMAGE_DESC }}
             org.opencontainers.image.documentation=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.REPO_NAME }}/refs/heads/main/README.md
             org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ env.REPO_NAME }}/blob/main/Containerfile
             org.opencontainers.image.title=${{ env.REPO_NAME }}
             org.opencontainers.image.url=https://github.com/${{ github.repository_owner }}/${{ env.REPO_NAME }}
             org.opencontainers.image.vendor=${{ github.repository_owner }}
-            org.opencontainers.image.version=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
+            org.opencontainers.image.version={{date 'YYYYMMDD'}}
             containers.bootc=1
           sep-tags: " "
           sep-annotations: " "
 
-      # Write secrets to temp files for --secret src=
       - name: Prepare build secrets
-        shell: bash
         run: |
+          umask 077
           if [[ "${GITHUB_EVENT_NAME}" == "pull_request" || "${GITHUB_REF}" != "refs/heads/main" ]]; then
-            echo "${{ secrets.GITHUB_TOKEN }}" > /tmp/REGISTRY_TOKEN
-            echo "" > /tmp/PINGGY_TOKEN
+            printf '%s' "${{ secrets.GITHUB_TOKEN }}" > /tmp/REGISTRY_TOKEN
+            : > /tmp/PINGGY_TOKEN
           else
-            echo "${{ secrets.PAT_RENOVATEBOT }}" > /tmp/REGISTRY_TOKEN
-            echo "${{ secrets.PINGGY_TOKEN }}" > /tmp/PINGGY_TOKEN
+            printf '%s' "${{ secrets.PAT_RENOVATEBOT }}" > /tmp/REGISTRY_TOKEN
+            printf '%s' "${{ secrets.PINGGY_TOKEN }}" > /tmp/PINGGY_TOKEN
           fi
-
           cp "${HOME}/.docker/config.json" /tmp/creds
-          chmod 600 /tmp/creds
-          chmod 600 /tmp/REGISTRY_TOKEN
-          chmod 600 /tmp/PINGGY_TOKEN
 
-      - name: Use buildah build to create the image
+      - name: Build image (OCI, pull latest base)
         id: build-image
         uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
         with:
@@ -123,7 +108,7 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           layers: true
-          oci: false
+          oci: true
           build-args: |
             REGISTRY_USERNAME="${{ github.repository_owner }}"
             REGISTRY_URL=ghcr.io
@@ -131,56 +116,57 @@ jobs:
           containerfiles: |
             ${{ env.CONTEXT }}/Containerfile
           extra-args: |
+            --pull=true
             --secret id=registry_token,src=/tmp/REGISTRY_TOKEN
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
             --secret id=creds,src=/tmp/creds
 
       # Save PR image as tar so Trivy can scan without pushing
-      - name: Save PR image as tar for Trivy
+      - name: Save PR image as tar (PR only)
         if: ${{ github.event_name == 'pull_request' }}
         run: podman save "${{ env.PR_IMAGE }}" | gzip > pr-image.tar.gz
 
-      - name: Upload PR image as a Github artifact
+      - name: Upload PR image artifact (PR only)
         if: ${{ github.event_name == 'pull_request' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: pr-image
-          path: "${{ github.workspace }}/pr-image.tar.gz"
+          path: pr-image.tar.gz
 
-      - name: Trivy (base:latest)
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+      # Single base scan → produce JSON + SARIF once, reuse later
+      - name: Setup Trivy
+        uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
         with:
-          image-ref: ${{ env.BASE_IMAGE }}
-          format: json
-          output: base_trivy.json
-          ignore-unfixed: true
-          #severity: HIGH,CRITICAL
-          scanners: "vuln"
-        env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
+          cache: true
 
-      - name: Upload trivy json report as a Github artifact
+      - name: Trivy base scan → JSON
+        run: trivy image --quiet --ignore-unfixed --format json --scanners vuln --skip-db-update --skip-java-db-update -o base_trivy.json "${{ env.BASE_IMAGE }}"
+
+      - name: Trivy base scan → SARIF
+        run: trivy image --quiet --ignore-unfixed --format sarif --scanners vuln --skip-db-update --skip-java-db-update -o trivy-base.sarif "${{ env.BASE_IMAGE }}"
+
+      - name: Upload Trivy artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: base_trivy.json
-          path: "${{ github.workspace }}/base_trivy.json"
+          name: trivy-base
+          path: |
+            base_trivy.json
+            trivy-base.sarif
 
-      - name: Publish Trivy Output to Summary
-        run: | #sh
+      - name: Publish base scan summary
+        run: |
           {
-            echo "### Security Output"
+            echo "### Security Output (base)"
             echo "<details><summary>Click to expand</summary>"
-            echo ""
+            echo
             echo '```json'
             cat base_trivy.json
             echo '```'
             echo "</details>"
-          } >> $GITHUB_STEP_SUMMARY
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Push to Container registry
+      - name: Push to GHCR (non-PR only)
         if: ${{ github.event_name != 'pull_request' }}
-        id: push-to-ghcr
         uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
         with:
           image: ${{ steps.build-image.outputs.image }}
@@ -197,70 +183,28 @@ jobs:
       contents: read
       packages: read
       id-token: write
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      security-events: write
     steps:
-      - name: Log in to the Container registry
-        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
+      - name: Download base scan artifacts
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          name: trivy-base
+          path: "${{ github.workspace }}"
 
-      - name: Enable podman pull
-        shell: bash
-        run: |
-          #podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
-
-      - name: Manual Trivy Setup
-        uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
-        with:
-          cache: true
-
-      - name: Trivy REPORT (base:latest)
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
-        with:
-          image-ref: ${{ env.BASE_IMAGE }}
-          ignore-unfixed: true
-          #severity: HIGH,CRITICAL
-          format: "sarif"
-          output: "trivy-results.sarif"
-          skip-setup-trivy: true
-          scanners: "vuln"
-        env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
-
-      - name: Upload Trivy scan results to GitHub Security tab
+      - name: Upload SARIF to Security tab
         uses: github/codeql-action/upload-sarif@192325c86100d080feab897ff886c34abd4c83a3 # v3
         if: ${{ always() }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          sarif_file: "${{ github.workspace }}/trivy-results.sarif"
+          sarif_file: "${{ github.workspace }}/trivy-base.sarif"
           category: trivy
 
-      - name: Trivy SBOM (base:latest)
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
-        with:
-          image-ref: ${{ env.BASE_IMAGE }}
-          scan-type: image
-          format: "github"
-          output: "dependency-results.sbom.json"
-          github-pat: ${{ secrets.GITHUB_TOKEN }} # or ${{ secrets.github_pat_name }} if you're using a PAT
-          severity: "MEDIUM,HIGH,CRITICAL"
-          scanners: "vuln"
-          skip-setup-trivy: true
-        env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
-
-      - name: Upload trivy report as a Github artifact
+      - name: Upload JSON SBOM-ish (base) as artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: trivy-sbom-report
-          path: "${{ github.workspace }}/dependency-results.sbom.json"
-          retention-days: 20 # 90 is the default
+          name: base_trivy.json
+          path: "${{ github.workspace }}/base_trivy.json"
+          retention-days: 20
 
   run-on-pr:
     runs-on: ubuntu-latest
@@ -273,13 +217,14 @@ jobs:
       packages: read
       id-token: write
       pull-requests: write
+      security-events: write
     steps:
-      - name: Manual Trivy Setup
+      - name: Setup Trivy
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
         with:
           cache: true
 
-      - name: Download PR image
+      - name: Download PR image + base scan
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
           name: pr-image
@@ -288,34 +233,18 @@ jobs:
       - name: Download base_trivy.json
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
-          name: base_trivy.json
+          name: trivy-base
           path: "${{ github.workspace }}"
 
-      - name: Log in to the Container registry
-        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Load PR image (no registry login needed)
+        run: podman load -q -i "${{ github.workspace }}/pr-image.tar.gz"
 
-      - name: Load latest image
-        shell: bash
-        run: | #sh
-          podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
-
-      - name: Inspect images (Podman)
+      - name: Inspect base vs PR (local)
         id: meta
-        shell: bash
-        run: | #sh
+        run: |
           set -euo pipefail
-          podman load -q -i ${{ github.workspace }}/pr-image.tar.gz
-          podman images
-
-          BASE_RAW=$(podman image inspect "${{ env.BASE_IMAGE }}" | jq '.[0]')
+          BASE_RAW=$(podman image inspect "${{ env.BASE_IMAGE }}" | jq '.[0]') || BASE_RAW='{}'
           PR_RAW=$(podman image inspect "${{ env.PR_IMAGE }}" | jq '.[0]')
-
           BASE_DIGEST=$(jq -r '.Digest // empty' <<<"$BASE_RAW")
           PR_DIGEST=$(jq -r '.Digest // empty' <<<"$PR_RAW")
           BASE_CREATED=$(jq -r '.Created // "n/a"' <<<"$BASE_RAW")
@@ -324,12 +253,10 @@ jobs:
           PR_SIZE=$(jq -r '.Size // 0' <<<"$PR_RAW")
           BASE_LAYERS=$(jq -r '.RootFS.Layers | length' <<<"$BASE_RAW")
           PR_LAYERS=$(jq -r '.RootFS.Layers | length' <<<"$PR_RAW")
-
           BASE_KEYS=$(jq -r '.Labels | keys[]?' <<<"$BASE_RAW" | sort || true)
           PR_KEYS=$(jq -r '.Labels | keys[]?' <<<"$PR_RAW" | sort || true)
           LABELS_CHANGED=$(comm -3 <(printf "%s\n" "$BASE_KEYS") <(printf "%s\n" "$PR_KEYS") | paste -sd, -)
           [[ -z "$LABELS_CHANGED" ]] && LABELS_CHANGED="_none_"
-
           echo "base_digest=$BASE_DIGEST" >> $GITHUB_OUTPUT
           echo "pr_digest=$PR_DIGEST" >> $GITHUB_OUTPUT
           echo "base_created=$BASE_CREATED" >> $GITHUB_OUTPUT
@@ -340,48 +267,34 @@ jobs:
           echo "pr_layers=$PR_LAYERS" >> $GITHUB_OUTPUT
           echo "labels_changed=$LABELS_CHANGED" >> $GITHUB_OUTPUT
 
-      - name: Trivy (PR)
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
-        with:
-          input: pr-image.tar.gz
-          format: json
-          output: pr_trivy.json
-          ignore-unfixed: true
-          #severity: HIGH,CRITICAL
-          skip-setup-trivy: true
-          scanners: "vuln"
-        env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
+      - name: Trivy (PR) → JSON + SARIF
+        run: |
+          trivy image --quiet --ignore-unfixed --format json  --scanners vuln --skip-db-update --skip-java-db-update -o pr_trivy.json "${{ env.PR_IMAGE }}"
+          trivy image --quiet --ignore-unfixed --format sarif --scanners vuln --skip-db-update --skip-java-db-update -o trivy-pr.sarif "${{ env.PR_IMAGE }}"
 
       - name: Publish Trivy Output to Summary
-        run: | #sh
+        run: |
           {
-            echo "### Security Output"
+            echo "### Security Output (PR)"
             echo "<details><summary>Click to expand</summary>"
-            echo ""
+            echo
             echo '```json'
             cat pr_trivy.json
             echo '```'
             echo "</details>"
-          } >> $GITHUB_STEP_SUMMARY
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Build report
+      - name: Build PR diff comment
         id: report
-        shell: bash
-        run: | #sh
+        run: |
           set -euo pipefail
           base_size=${{ steps.meta.outputs.base_size }}
           pr_size=${{ steps.meta.outputs.pr_size }}
           base_h=$(numfmt --to=iec --suffix=B "$base_size")
           pr_h=$(numfmt --to=iec --suffix=B "$pr_size")
-          delta=$(( pr_size - base_size ))
-          abs=${delta#-}
-          delta_h=$(numfmt --to=iec --suffix=B "$abs")
-          if   [[ $delta -gt 0 ]]; then trend="+${delta_h}"
-          elif [[ $delta -lt 0 ]]; then trend="-${delta_h}"
-          else trend="±0"; fi
-
+          delta=$(( pr_size - base_size )); abs=${delta#-}
+          trend=$(numfmt --to=iec --suffix=B "$abs")
+          [[ $delta -gt 0 ]] && trend="+${trend}" || [[ $delta -lt 0 ]] && trend="-${trend}" || trend="±0"
           base_set=$(jq -r '[.Results[]?.Vulnerabilities[]? | .VulnerabilityID] | unique[]?' base_trivy.json | sort || true)
           pr_set=$(jq -r   '[.Results[]?.Vulnerabilities[]? | .VulnerabilityID] | unique[]?' pr_trivy.json   | sort || true)
           new=$(comm -13 <(printf "%s\n" "$base_set") <(printf "%s\n" "$pr_set") | sort || true)
@@ -390,48 +303,32 @@ jobs:
           fix_n=$(printf "%s\n" "$fix" | grep -c . || true)
           new_top=$(printf "%s\n" "$new" | head -n 5 | paste -sd, -)
           [[ -z "$new_top" ]] && new_top="_none_"
-
           {
             echo "### 🧾 Image diff"
             echo
             echo "**Repo:** ghcr.io/${{ github.repository }}"
             echo "**Base:** \`${{ env.BASE_IMAGE }}\` (digest: ${{ steps.meta.outputs.base_digest || 'n/a' }})"
             echo "**PR:** \`${{ env.PR_IMAGE }}\` (digest: ${{ steps.meta.outputs.pr_digest || 'n/a' }})"
-            #echo "- Trivy CVEs: ${pr_set}"
             echo
             echo "- Created: ${{ steps.meta.outputs.base_created }} → ${{ steps.meta.outputs.pr_created }}"
             echo "- Size (compressed): ${base_h} → ${pr_h} (**${trend}**)"
-            echo "- Layers: ${{ steps.meta.outputs.base_layers }} → ${{ steps.meta.outputs.pr_layers }}" # (**${layer_delta}**)
+            echo "- Layers: ${{ steps.meta.outputs.base_layers }} → ${{ steps.meta.outputs.pr_layers }}"
             echo "- Labels changed: ${{ steps.meta.outputs.labels_changed }}"
             echo "- Trivy HIGH/CRIT: +${new_n} / -${fix_n} (new: ${new_top})"
           } > comment.md
 
-      - name: Sticky PR comment (update in-place)
+      - name: Sticky PR comment
         uses: marocchino/sticky-pull-request-comment@773744901bac0e8cbb5a0dc842800d45e9b2b405 # v2
         with:
           path: comment.md
           skip_unchanged: true
 
-      - name: Trivy REPORT (PR)
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
-        with:
-          input: pr-image.tar.gz
-          ignore-unfixed: true
-          severity: HIGH,CRITICAL
-          format: "sarif"
-          output: "trivy-results.sarif"
-          skip-setup-trivy: true
-          scanners: "vuln"
-        env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
-
-      - name: Upload Trivy scan results to GitHub Security tab
+      - name: Upload PR SARIF to Security tab
         uses: github/codeql-action/upload-sarif@192325c86100d080feab897ff886c34abd4c83a3 # v3
         if: ${{ always() }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          sarif_file: "${{ github.workspace }}/trivy-results.sarif"
+          sarif_file: trivy-pr.sarif
           category: trivy
 
   test:
@@ -439,7 +336,7 @@ jobs:
     needs: build-bootc-image
     if: ${{ github.event_name == 'pull_request' }}
     continue-on-error: false
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: read
       packages: read
@@ -449,7 +346,7 @@ jobs:
       SSH_USERNAME: runner
       SSH_OPTIONS: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
     steps:
-      - name: Clone the repository
+      - name: Checkout
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Download PR image
@@ -458,37 +355,26 @@ jobs:
           name: pr-image
           path: "${{ github.workspace }}"
 
-      - name: Log in to the Container registry
-        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Load PR image
-        shell: bash
-        run: | #sh
-          sudo podman load -q -i ${{ github.workspace }}/pr-image.tar.gz
+        run: sudo podman load -q -i "${{ github.workspace }}/pr-image.tar.gz"
 
       - name: Install deps (qemu, podman, jq)
         run: |
           set -e
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends -qq socat qemu-system-x86 qemu-utils podman jq
+          sudo apt-get install -y --no-install-recommends -qq socat qemu-system-x86 qemu-utils podman jq sqlite3
 
       - name: Generate ephemeral SSH keypair
         id: ssh-key
-        run: | #sh
+        run: |
           set -e
           mkdir -p out
           ssh-keygen -t ed25519 -N "" -f out/ci_ssh_key
           echo "PUBKEY=$(cat out/ci_ssh_key.pub)" >> $GITHUB_ENV
-
           echo "ssh_key=./out/ci_ssh_key" >> $GITHUB_OUTPUT
 
       - name: Write bootc-image-builder user config (SSH access)
         run: |
-          set -e
           {
             echo '[[customizations.user]]'
             echo "name = \"${{ env.SSH_USERNAME }}\""
@@ -496,24 +382,17 @@ jobs:
             echo "key = \"${PUBKEY}\""
             echo 'groups = ["wheel"]'
           } > out/config.toml
+          cat out/config.toml
 
-          cat ./out/config.toml
- 
-      - name: Configure Podman
-        shell: bash
-        run: | #sh
+      - name: Configure Podman (overlay driver)
+        run: |
           sudo mkdir -p /etc/containers
-          echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" \
-            | sudo tee /etc/containers/storage.conf
-
+          printf "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" | sudo tee /etc/containers/storage.conf
           # workaround https://github.com/containers/podman/issues/21683
-          sudo apt install -y sqlite3
           echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
 
-      # https://github.com/bootc-dev/bootc/blob/main/tests/build.sh
       - name: Build Bootable Image
         id: create-vmdk
-        shell: bash
         env:
           CONFIG_FILE: ./out/config.toml
           IMAGE: ${{ env.PR_IMAGE }}
@@ -521,69 +400,42 @@ jobs:
           USE_LIBREPO: false
           IMAGE_TYPE: qcow2
           ROOTFS: xfs
-        run: | #sh
+        run: |
+          set -e
           DESIRED_UID=$(id -u)
           DESIRED_GID=$(id -g)
-
           mkdir -p ./output
-
-          INPUT_ARGS=""
-          if [ "${USE_LIBREPO}" == "true" ]; then
-              INPUT_ARGS+="--use-librepo=True "
-          else
-              INPUT_ARGS+="--use-librepo=False "
-          fi
-
-          sudo podman run \
-            --rm \
-            --privileged \
-            --pull=newer \
-            --security-opt label=type:unconfined_t \
+          INPUT_ARGS=$([ "${USE_LIBREPO}" == "true" ] && echo "--use-librepo=True" || echo "--use-librepo=False")
+          sudo podman run --rm --privileged --pull=newer --security-opt label=type:unconfined_t \
             -v ${CONFIG_FILE}:/config.toml:ro \
             -v ./output:/output \
             -v /var/lib/containers/storage:/var/lib/containers/storage \
             ${BOOTC_IMAGE_BUILDER_IMAGE} \
-            --type ${IMAGE_TYPE} \
-            --local \
-            --chown $DESIRED_UID:$DESIRED_GID \
-            ${INPUT_ARGS} \
-            $IMAGE
-
+            --type ${IMAGE_TYPE} --local --chown $DESIRED_UID:$DESIRED_GID ${INPUT_ARGS} $IMAGE
           case "${IMAGE_TYPE}" in
-          "raw"|"ami") OUTPUT_DIRECTORY="./output/image" ;;
-          "iso") OUTPUT_DIRECTORY="./output/bootiso" ;;
-          "vhd") OUTPUT_DIRECTORY="./output/vpc" ;;
-          *) OUTPUT_DIRECTORY="./output/${IMAGE_TYPE}" ;;
+            raw|ami) OUTPUT_DIRECTORY="./output/image" ;;
+            iso)     OUTPUT_DIRECTORY="./output/bootiso" ;;
+            vhd)     OUTPUT_DIRECTORY="./output/vpc" ;;
+            *)       OUTPUT_DIRECTORY="./output/${IMAGE_TYPE}" ;;
           esac
-
           ISO_PATH=(${OUTPUT_DIRECTORY}/*)
-
-          # Create a checksum of the output file, stored in the same directory
           CHECKSUM=$(sha256sum $ISO_PATH | awk '{print $1}')
           CHECKSUM_PATH=${ISO_PATH}-CHECKSUM
           echo $CHECKSUM > ${CHECKSUM_PATH}
-
           echo "output_directory=$OUTPUT_DIRECTORY" >> $GITHUB_OUTPUT
           echo "checksum=$CHECKSUM" >> $GITHUB_OUTPUT
           echo "checksum_path=$CHECKSUM_PATH" >> $GITHUB_OUTPUT
           echo "path=$ISO_PATH" >> $GITHUB_OUTPUT
 
       - name: Boot QEMU (headless) with SSH forward
-        env:
+        env: 
           DISK: ${{ steps.create-vmdk.outputs.path }}
-        run: | #sh
+        run: |
           set -e
-          sudo qemu-system-x86_64 \
-            -name bootc-vm \
-            -enable-kvm \
-            -cpu host \
-            -m 2G \
+          sudo qemu-system-x86_64 -name bootc-vm -enable-kvm -cpu host -m 2G \
             -drive if=virtio,file="${DISK}",format=qcow2 \
-            -net nic,model=virtio \
-            -net user,hostfwd=tcp::2222-:22 \
-            -display none \
-            -monitor unix:/tmp/qemu-monitor-sock,server,nowait \
-            -daemonize > out/qemu-console.log 2>&1
+            -net nic,model=virtio -net user,hostfwd=tcp::2222-:22 \
+            -display none -monitor unix:/tmp/qemu-monitor-sock,server,nowait -daemonize > out/qemu-console.log 2>&1
 
       - name: Wait for SSH
         env:
@@ -592,86 +444,26 @@ jobs:
           SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
           SLEEP_SECONDS: 10
           RETRIES: 10
-        run: | #sh
-          # turn the env string into a Bash array
+        run: |
           read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
-
-          wait_for_ssh_up() {
-            SSH_STATUS=$(ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@"${1}" '/bin/bash -c "echo -n READY"')
-            if [[ $SSH_STATUS == "READY" ]]; then
-              echo 1
-            else
-              echo 0
-            fi
-          }
-
           for _ in $(seq 0 ${RETRIES}); do
-            RESULT=$(wait_for_ssh_up "localhost")
-            if [[ $RESULT == 1 ]]; then
-              echo "SSH is ready now! 🥳"
-              break
-            fi
+            if ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@localhost 'echo -n READY' 2>/dev/null | grep -q READY; then
+              echo "SSH is ready! 🎉"; break; fi
             sleep ${SLEEP_SECONDS}
           done
+          ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@localhost "sudo bootc status"
+          ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@localhost "rpm-ostree status"
+          ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@localhost "systemctl is-system-running --wait"
 
-          # Make sure VM is ready for testing
-          echo "--- system is-running ---"
-          ssh "${SSH_OPTS[@]}" \
-            -i "$SSH_KEY" \
-            -p 2222 \
-            ${SSH_USERNAME}@localhost \
-            "sudo bootc status"
-
-          echo "--- system is-running ---"
-          ssh "${SSH_OPTS[@]}" \
-            -i "$SSH_KEY" \
-            -p 2222 \
-            ${SSH_USERNAME}@localhost \
-            "rpm-ostree status"
-
-          echo "--- system is-running ---"
-          ssh "${SSH_OPTS[@]}" \
-            -i "$SSH_KEY" \
-            -p 2222 \
-            ${SSH_USERNAME}@localhost \
-            "systemctl is-system-running --wait"
-          
       - name: Basic health checks
         env:
           CORE_SERVICES: "sshd NetworkManager"
           SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
           SSH_USERNAME: ${{ env.SSH_USERNAME }}
           SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
-        run: | #sh
-          # turn the env string into a Bash array
+        run: |
           read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
-          cat ./tests/healthcheck.sh | ssh "${SSH_OPTS[@]}" \
-            -i "$SSH_KEY" \
-            -p 2222 \
-            ${SSH_USERNAME}@localhost
-
-      # - name: /etc drift detector (fail on unexpected drift)
-      #   env:
-      #     SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
-      #     SSH_USERNAME: ${{ env.SSH_USERNAME }}
-      #     SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
-      #     # Allow-list: expected first-boot changes under /etc (adjust as your image evolves)
-      #     DRIFT_ALLOW_RE: "(^A\\s+/etc/ssh/ssh_host_.*|^A\\s+/etc/machine-id|^M\\s+/etc/issue.*|^A\\s+/etc/NetworkManager/system-connections/.*|^A\\s+/etc/resolv.conf)$"
-      #   run: | #sh
-      #     set -e
-      #     # turn the env string into a Bash array
-      #     read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
-      #     ssh "${SSH_OPTS[@]}" \
-      #       -i "$SSH_KEY" \
-      #       -p 2222 \
-      #       ${SSH_USERNAME}@localhost \
-      #         'sudo ostree admin config-diff || true' | tee out/etc-drift.txt
-      #     echo "---- Drift output ----"
-      #     cat out/etc-drift.txt || true
-      #     if grep -E '^[AMD]\s+/etc' out/etc-drift.txt | grep -Ev "${DRIFT_ALLOW_RE}" >/dev/null; then
-      #       echo "::error::Unexpected /etc drift detected (see artifact)."
-      #       exit 1
-      #     fi
+          cat ./tests/healthcheck.sh | ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@localhost
 
       - name: Collect logs and stop QEMU
         if: always()
@@ -679,35 +471,7 @@ jobs:
           SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
           SSH_USERNAME: ${{ env.SSH_USERNAME }}
           SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
-        run: | #sh
+        run: |
           mkdir -p out/journal
-          # Journal
-          # turn the env string into a Bash array
           read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
-          ssh "${SSH_OPTS[@]}" \
-            -i "$SSH_KEY" \
-            -p 2222 \
-            ${SSH_USERNAME}@localhost \
-              'sudo journalctl -b --no-pager -o short-precise | tail -n +1' > out/journal/boot.log || true
-          # Stop QEMU
-          echo quit | sudo socat - unix-connect:/tmp/qemu-monitor-sock
-
-      - name: Publish Output to summary
-        if: always()
-        run: | #sh
-          {
-            echo "### QEMU Testing Output"
-            echo "<details><summary>Click to expand</summary>"
-            echo ""
-            echo "#### QEMU log"
-            echo ""
-            echo '```'
-            cat out/qemu-console.log
-            echo '```'
-            echo ""
-            echo "#### Journal"
-            echo '```'
-            cat out/journal/boot.log
-            echo '```'
-            echo "</details>"
-          } >> $GITHUB_STEP_SUMMARY
+          ssh "${SSH_OPTS[@]}" -i "$SSH_KEY" -p 2222 ${SSH_USERNAME}@localhost
