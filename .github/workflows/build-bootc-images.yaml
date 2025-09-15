@@ -35,7 +35,7 @@ jobs:
     name: Build image
     runs-on: ubuntu-latest
     continue-on-error: false
-    environment: ${{ "${GITHUB_REF}" == "refs/heads/main" && 'prod' || 'dev' }}
+    environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     timeout-minutes: 10
     outputs:
       image: ${{ steps.build-image.outputs.image }}
