@@ -1,22 +1,19 @@
 [Unit]
-Description=Github Action Runner
-After=network.target
-Wants=network-online.target
-After=network-online.target
-
+Description=GitHub Actions Runner Listener
+Requires=actions-runner-config.service
+After=actions-runner-config.service
 
 [Service]
 Type=simple
 User=runner
 Group=runner
-# Persistent writable state: /var/lib/actions-runner
-StateDirectory=actions-runner
-ExecStart=/usr/bin/bash -lc './run.sh'
-WorkingDirectory=/var/lib/actions-runner
 
-KillMode=process
-KillSignal=SIGTERM
-TimeoutStopSec=5min
+WorkingDirectory=/var/lib/actions-runner
+EnvironmentFile=/etc/homeserver/metadata/github-runner
+
+ExecStart=/var/lib/actions-runner/run.sh
+Restart=always
+RestartSec=10s
 
 [Install]
 WantedBy=multi-user.target
