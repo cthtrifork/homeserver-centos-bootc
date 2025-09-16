@@ -15,6 +15,13 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "Containerfile"
+      - "config.toml"
+      - "system_files/homeserver/"
+      - "build_files/"
+      - ".github/workflows/build-bootc-images.yaml"
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
@@ -711,3 +718,4 @@ jobs:
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
+
