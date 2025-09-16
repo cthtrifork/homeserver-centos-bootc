@@ -3,6 +3,17 @@ name: Create vmdk
 on:
   workflow_dispatch:
     inputs:
+      type:
+        type: choice
+        description: 'Type of image to build.'
+        options:
+          - iso
+          - raw
+          - qcow2
+          - vmdk
+          - vdh
+        required: false
+        default: 'iso'
       image_name:
         description: "Image name to build"
         type: choice
@@ -51,3 +62,4 @@ jobs:
         with:
           name: ${{ inputs.image_name }}
           path: ${{ steps.create-vmdk.outputs.output-path }}
+
