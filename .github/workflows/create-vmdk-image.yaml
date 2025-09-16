@@ -11,7 +11,7 @@ jobs:
       fail-fast: true
       matrix:
         image:
-          - IMAGE_NAME: homeserver-centos-bootc-vmdk
+          - IMAGE_NAME: homeserver-centos-bootc
             CONTEXT: .
           - IMAGE_NAME: github-runner-centos-bootc
             CONTEXT: .
@@ -44,5 +44,6 @@ jobs:
         with:
           name: ${{ matrix.image.IMAGE_NAME }}
           path: ${{ steps.create-vmdk.outputs.output-path }}
+
 
 
