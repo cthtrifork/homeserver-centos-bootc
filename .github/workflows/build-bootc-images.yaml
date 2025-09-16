@@ -4,6 +4,7 @@ on:
     - cron: "0 3 * * 0" # Runs at 03:00, only on Sunday for security patching
   workflow_dispatch:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     branches:
       - main
     paths:
@@ -43,6 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     timeout-minutes: 10
     outputs:
       image: ${{ steps.build-image.outputs.image }}
@@ -481,7 +483,7 @@ jobs:
         run: |
           set -e
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends -qq socat qemu-system-x86 qemu-utils podman jq
+          sudo apt-get install -y --no-install-recommends -qq socat qemu-system-x86 qemu-utils podman jq sqlite3
 
       - name: Generate ephemeral SSH keypair
         id: ssh-key
@@ -514,7 +516,6 @@ jobs:
             | sudo tee /etc/containers/storage.conf
 
           # workaround https://github.com/containers/podman/issues/21683
-          sudo apt install -y sqlite3
           echo "update DBConfig set GraphDriver = 'overlay' where GraphDriver = '';" | sudo sh -c '(cd /var/lib/containers/storage && sqlite3 db.sql)'
 
       # https://github.com/bootc-dev/bootc/blob/main/tests/build.sh
@@ -718,4 +719,5 @@ jobs:
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
+
 
