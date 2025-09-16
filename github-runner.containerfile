@@ -2,7 +2,7 @@
 FROM scratch AS ctx
 COPY / /
 
-FROM quay.io/centos-bootc/centos-bootc:stream9
+FROM quay.io/centos-bootc/centos-bootc:stream10@sha256:42fc456c6eeee3aa999c320febeaf33f62c9f0e50a37acdece90c3b264ac4bc1
 
 #setup sudo to not require password
 RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-sudo
@@ -11,9 +11,9 @@ RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-su
 RUN echo VARIANT="Github Runner bootc OS" && echo VARIANT_ID=com.github.caspertdk.homeserver-bootc >> /usr/lib/os-release
 
 # Registry auth
-ARG REGISTRY_TOKEN="notset"
-ARG REGISTRY_URL="notset"
-ARG REGISTRY_USERNAME="someuser"
+ARG REGISTRY_TOKEN
+ARG REGISTRY_URL
+ARG REGISTRY_USERNAME
 
 RUN --mount=type=secret,id=creds,required=true cp /run/secrets/creds /usr/lib/container-auth.json && \
     chmod 0600 /usr/lib/container-auth.json && \
@@ -21,7 +21,7 @@ RUN --mount=type=secret,id=creds,required=true cp /run/secrets/creds /usr/lib/co
 
 # Configure repositories
 RUN dnf -y install 'dnf-command(config-manager)'
-RUN dnf -y install dnf-plugins-core procps-ng curl file qemu-guest-agent git rsync unzip jq lttng-ust openssl-libs krb5-libs zlib libicu
+RUN dnf -y install dnf-plugins-core procps-ng curl file qemu-guest-agent git rsync unzip jq lttng-ust openssl-libs krb5-libs zlib libicu tree
 
 # Install docker
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -31,22 +31,22 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 # Create runner user
 RUN useradd --groups wheel,docker runner && \
     mkdir -m 0700 -p /home/runner/ && \
-    chown -R runner: /home/runner
-
-WORKDIR /home/runner
+    chown -R runner: /home/runner && \
+    mkdir -m 0700 -p /usr/share/runner && \
+    chown -R runner: /usr/share/runner
 
 ENV RUNNER_VERSION=2.328.0
-RUN curl -o actions-runner-linux.tar.gz -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz \
-	&& tar xzf ./actions-runner-linux.tar.gz && \
-	rm ./actions-runner-linux.tar.gz
+RUN curl -o /usr/share/runner/actions-runner-linux.tar.gz -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz \
+	&& tar xzf /usr/share/runner/actions-runner-linux.tar.gz -C /usr/share/runner && \
+	rm /usr/share/runner/actions-runner-linux.tar.gz
 
 ENV RUNNER_ALLOW_RUNASROOT="1"
-ARG REPOSITORY="notset"
+ARG REPOSITORY
 # Fetch a registration  token (only works for 1 hour!)
 RUN --mount=type=secret,id=registry_token,required=true GITHUB_TOKEN="$(cat /run/secrets/registry_token)"; \
     RUNNER_TOKEN=$(curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/$REPOSITORY/actions/runners/registration-token | jq -r .token); \
     ./config.sh --replace --url https://github.com/${REPOSITORY} --token ${RUNNER_TOKEN} \
-    --work /home/runner --labels self-hosted,Linux,X64 --unattended
+    --work /usr/share/runner --labels self-hosted,Linux,X64 --unattended
 
 # Install service
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \

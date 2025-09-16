@@ -3,7 +3,7 @@ Description=Github Action Runner
 After=network.target
 
 [Service]
-ExecStart=/home/runner/runsvc.sh
+ExecStart=/usr/share/runner/runsvc.sh
 User=runner
 WorkingDirectory=/home/runner
 KillMode=process
