@@ -36,9 +36,11 @@ RUN useradd --groups wheel,docker runner && \
     chown -R runner: /usr/share/runner
 
 ENV RUNNER_VERSION=2.328.0
-RUN curl -o /usr/share/runner/actions-runner-linux.tar.gz -L https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz \
-	&& tar xzf /usr/share/runner/actions-runner-linux.tar.gz -C /usr/share/runner && \
-	rm /usr/share/runner/actions-runner-linux.tar.gz
+RUN mkdir -p /usr/lib/actions-runner && \
+    curl -fsSL -o /tmp/runner.tgz \
+      https://github.com/actions/runner/releases/download/v${RUNNER_VERSION}/actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz && \
+    tar -xzf /tmp/runner.tgz -C /usr/lib/actions-runner && rm -f /tmp/runner.tgz && \
+    chmod -R a+rX /usr/lib/actions-runner
 
 ENV RUNNER_ALLOW_RUNASROOT="1"
 ARG REPOSITORY

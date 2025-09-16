@@ -1,11 +1,19 @@
 [Unit]
 Description=Github Action Runner
 After=network.target
+Wants=network-online.target
+After=network-online.target
+
 
 [Service]
-ExecStart=/usr/share/runner/runsvc.sh
+Type=simple
 User=runner
-WorkingDirectory=/home/runner
+Group=runner
+# Persistent writable state: /var/lib/actions-runner
+StateDirectory=actions-runner
+ExecStart=/usr/bin/bash -lc './run.sh'
+WorkingDirectory=/var/lib/actions-runner
+
 KillMode=process
 KillSignal=SIGTERM
 TimeoutStopSec=5min
