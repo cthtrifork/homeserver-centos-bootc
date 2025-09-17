@@ -2,7 +2,7 @@
 FROM scratch AS ctx
 COPY / /
 
-FROM quay.io/centos-bootc/centos-bootc:stream9
+FROM quay.io/centos-bootc/centos-bootc:stream9@sha256:3a75c664fbf8c540b0c75e9c0cac76828ee600bc58b4378c73a3d9a5eb2f0852
 
 #setup sudo to not require password
 RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-sudo
@@ -11,7 +11,6 @@ RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-su
 RUN echo VARIANT="Github Runner bootc OS" && echo VARIANT_ID=com.github.caspertdk.homeserver-bootc >> /usr/lib/os-release
 
 # Registry auth
-ARG REGISTRY_TOKEN
 ARG REGISTRY_URL
 ARG REGISTRY_USERNAME
 
@@ -21,7 +20,13 @@ RUN --mount=type=secret,id=creds,required=true cp /run/secrets/creds /usr/lib/co
 
 # Configure repositories
 RUN dnf -y install 'dnf-command(config-manager)'
-RUN dnf -y install dnf-plugins-core procps-ng curl file qemu-guest-agent git rsync unzip jq lttng-ust openssl-libs krb5-libs zlib libicu tree
+RUN dnf -y install dnf-plugins-core procps-ng file qemu-guest-agent \
+    # Used by github runner
+    lttng-ust openssl-libs krb5-libs zlib libicu \
+    # Dev tools
+    git rsync unzip jq tree curl \
+    # Used by qemu for vmdk+iso creation
+    qemu-kvm qemu-img sqlite
 
 # Install docker
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
