@@ -34,4 +34,9 @@ fi
 chmod +x run.sh
 chmod +x run-helper.sh
 
+# Setup home directory for runner user
+mkdir -m 0700 -p /home/runner/.config
+mkdir -m 0700 -p /home/runner/.docker
+chown -R runner: /home/runner
+
 exit 0
