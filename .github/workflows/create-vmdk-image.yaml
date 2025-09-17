@@ -29,9 +29,9 @@ on:
         default: "."
 
 jobs:
-  create-vmdk:
-    name: Build vmdk
-    runs-on: ubuntu-latest
+  create-artifact:
+    name: Build ${{ inputs.image_name }} ${{ inputs.type}} image
+    runs-on: self-hosted # ubuntu-latest
     environment: dev
     permissions:
       contents: read
