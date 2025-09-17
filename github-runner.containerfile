@@ -46,7 +46,7 @@ ENV RUNNER_ALLOW_RUNASROOT="1"
 ARG REPOSITORY
 RUN --mount=type=secret,id=registry_token,required=true GITHUB_TOKEN="$(cat /run/secrets/registry_token)"; \
     mkdir -p /etc/homeserver/metadata && \
-    printf "PINGGY_TOKEN=%s\nPINGGY_HOST=%s\n" "$PINGGY_TOKEN" "$PINGGY_HOST" > /etc/homeserver/metadata/github-runner && \
+    printf "REPOSITORY=%s\nGITHUB_TOKEN=%s\n" "$REPOSITORY" "$GITHUB_TOKEN" > /etc/homeserver/metadata/github-runner && \
     chmod 600 /etc/homeserver/metadata/github-runner
 
 # Install service
