@@ -64,6 +64,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }} 
           password: ${{ secrets.PAT_RENOVATEBOT }}
+          auth_file_path: $HOME/.config/containers/auth.json
       - run: echo "REGISTRY_AUTH_FILE=/var/home/runner/.docker/config.json" >> $GITHUB_ENV
 
       - name: Load image
