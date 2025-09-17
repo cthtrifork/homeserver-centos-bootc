@@ -70,6 +70,7 @@ jobs:
       - name: Load image
         shell: bash
         run: |
+          podman login ghcr.io --get-login || true
           podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Get current date
@@ -473,7 +474,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-          #auth_file_path: $HOME/.config/containers/auth.json
+          auth_file_path: $HOME/.config/containers/auth.json
+      - run: echo "REGISTRY_AUTH_FILE=$HOME/.config/containers/auth.json" >> $GITHUB_ENV
 
       - name: Load PR image
         shell: bash
