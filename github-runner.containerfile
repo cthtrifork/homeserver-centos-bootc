@@ -11,7 +11,6 @@ RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-su
 RUN echo VARIANT="Github Runner bootc OS" && echo VARIANT_ID=com.github.caspertdk.homeserver-bootc >> /usr/lib/os-release
 
 # Registry auth
-ARG REGISTRY_TOKEN
 ARG REGISTRY_URL
 ARG REGISTRY_USERNAME
 
