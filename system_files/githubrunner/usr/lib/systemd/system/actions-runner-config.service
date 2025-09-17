@@ -13,7 +13,7 @@ WorkingDirectory=/var/lib/actions-runner
 EnvironmentFile=/etc/homeserver/metadata/github-runner
 Environment=LABELS=self-hosted,Linux,X64
 
-ExecStart=/usr/libexec/actions-runner/configure-runner.sh
+ExecStart=/usr/libexec/configure-runner.sh
 RemainAfterExit=yes
 
 RemainAfterExit=yes
