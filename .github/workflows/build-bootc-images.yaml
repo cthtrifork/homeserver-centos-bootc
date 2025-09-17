@@ -62,15 +62,14 @@ jobs:
         uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: ${{ github.actor }} 
           password: ${{ secrets.PAT_RENOVATEBOT }}
-          auth_file_path: $HOME/.config/containers/auth.json
-      - run: echo "REGISTRY_AUTH_FILE=$HOME/.config/containers/auth.json" >> $GITHUB_ENV
+      - run: echo "REGISTRY_AUTH_FILE=/var/home/runner/.docker/config.json" >> $GITHUB_ENV
 
       - name: Load image
         shell: bash
         run: |
-          podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest --authfile $REGISTRY_AUTH_FILE
+          podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest --authfile /var/home/runner/.docker/config.json
 
       - name: Get current date
         id: date
