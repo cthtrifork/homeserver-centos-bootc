@@ -26,3 +26,12 @@ if [[ ! -f .runner ]]; then
     --labels "${LABELS}" \
     --unattended
 fi
+
+if [[ ! -f ./run-helper.sh ]]; then
+  cp $STATE_DIR/run-helper.sh.template $STATE_DIR/run-helper.sh
+fi
+
+chmod +x run.sh
+chmod +x run-helper.sh
+
+exit 0
