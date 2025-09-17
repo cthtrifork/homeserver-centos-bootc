@@ -21,7 +21,13 @@ RUN --mount=type=secret,id=creds,required=true cp /run/secrets/creds /usr/lib/co
 
 # Configure repositories
 RUN dnf -y install 'dnf-command(config-manager)'
-RUN dnf -y install dnf-plugins-core procps-ng curl file qemu-guest-agent git rsync unzip jq lttng-ust openssl-libs krb5-libs zlib libicu tree
+RUN dnf -y install dnf-plugins-core procps-ng file qemu-guest-agent \
+    # Used by github runner
+    lttng-ust openssl-libs krb5-libs zlib libicu \
+    # Dev tools
+    git rsync unzip jq tree curl \
+    # Used by qemu
+    qemu-system-x86 qemu-utils sqlite3
 
 # Install docker
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
