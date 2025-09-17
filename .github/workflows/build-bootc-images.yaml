@@ -69,8 +69,6 @@ jobs:
         shell: bash
         run: |
           podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
 
       - name: Get current date
         id: date
@@ -214,13 +212,12 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+          auth_file_path: $HOME/.config/containers/auth.json
 
       - name: Enable podman pull
         shell: bash
         run: |
           #podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
 
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
@@ -306,13 +303,12 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+          auth_file_path: $HOME/.config/containers/auth.json
 
       - name: Load latest image
         shell: bash
         run: | #sh
           podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
 
       - name: Inspect images (Podman)
         id: meta
@@ -473,6 +469,7 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+          auth_file_path: $HOME/.config/containers/auth.json
 
       - name: Load PR image
         shell: bash
