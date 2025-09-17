@@ -26,7 +26,7 @@ RUN dnf -y install dnf-plugins-core procps-ng file qemu-guest-agent \
     # Dev tools
     git rsync unzip jq tree curl \
     # Used by qemu for vmdk+iso creation
-    qemu-kvm qemu-img sqlite
+    qemu-kvm qemu-img sqlite buildah
 
 # Install docker
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -36,9 +36,7 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 # Create runner user
 RUN useradd --groups wheel,docker runner && \
     mkdir -m 0700 -p /home/runner/ && \
-    chown -R runner: /home/runner && \
-    mkdir -m 0700 -p /usr/share/runner && \
-    chown -R runner: /usr/share/runner
+    chown -R runner: /home/runner
 
 ENV RUNNER_VERSION=2.328.0
 RUN mkdir -p /usr/lib/actions-runner && \
@@ -67,6 +65,7 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 RUN systemctl enable docker.socket && \
     systemctl enable qemu-guest-agent && \
     systemctl enable podman.socket && \
-    systemctl enable actions.runner.service
+    systemctl enable actions-runner-config.service && \
+    systemctl enable actions-runner.service
 
 RUN bootc container lint
