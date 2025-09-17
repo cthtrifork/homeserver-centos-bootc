@@ -25,8 +25,8 @@ RUN dnf -y install dnf-plugins-core procps-ng file qemu-guest-agent \
     lttng-ust openssl-libs krb5-libs zlib libicu \
     # Dev tools
     git rsync unzip jq tree curl \
-    # Used by qemu
-    qemu-system-x86 qemu-utils sqlite3
+    # Used by qemu for vmdk+iso creation
+    qemu-kvm qemu-img sqlite
 
 # Install docker
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
