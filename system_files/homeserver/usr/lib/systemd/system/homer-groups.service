@@ -3,7 +3,7 @@ Description=Add wheel members to docker groups
 
 [Service]
 Type=oneshot
-ExecStart=/usr/libexec/homer-groups
+ExecStart=/usr/bin/bash -eu /usr/libexec/homer-groups
 Restart=on-failure
 RestartSec=30
 StartLimitInterval=0
