@@ -11,7 +11,7 @@ Group=runner
 StateDirectory=actions-runner
 WorkingDirectory=/var/lib/actions-runner
 EnvironmentFile=/etc/homeserver/metadata/github-runner
-Environment=LABELS=self-hosted,Linux,X64,CentOS
+Environment=RUNNER_LABELS=self-hosted,Linux,X64,CentOS
 
 ExecStart=/usr/libexec/configure-runner.sh
 RemainAfterExit=yes
