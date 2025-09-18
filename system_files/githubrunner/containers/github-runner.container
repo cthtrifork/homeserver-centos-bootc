@@ -25,6 +25,11 @@ Exec=/bin/bash -lc "/entrypoint.sh"
 # Network=host
 
 [Service]
+User=runner
+Group=runner
+
+WorkingDirectory=/var/lib/actions-runner
+
 Restart=always
 RestartSec=5s
 TimeoutStartSec=900
