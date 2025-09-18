@@ -14,6 +14,7 @@ wheelarray=($(getent group wheel | cut -d ":" -f 4 | tr  ',' '\n'))
 # Setup home directory for each user in wheel group
 for user in $wheelarray
 do
+  echo "Setting up home for user: $user"
   if [[ ! -d /home/$user ]]; then
     mkdir -m 0700 -p /home/$user/.config
     mkdir -m 0700 -p /home/$user/.docker

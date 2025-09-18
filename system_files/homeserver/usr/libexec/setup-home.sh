@@ -9,7 +9,6 @@ fi
 USER="$1"
 HOME_DIR="/home/$USER"
 
-HOME_DIR=/home/$USER
 cd $HOME_DIR
 
 # Setup OH-MY-BASH for user
