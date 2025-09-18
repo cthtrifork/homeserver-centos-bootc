@@ -23,6 +23,6 @@ args+=( --replace )
 echo "[entrypoint] Configuring runner with: ${args[*]}"
 ./config.sh "${args[@]}"
 
-./config.sh --check --url "https://github.com/${REPOSITORY}" --token "${REG_TOKEN}"
+./config.sh --check --url "https://github.com/${REPOSITORY}" --pat "${GITHUB_TOKEN}"
 
 exec ./run.sh
