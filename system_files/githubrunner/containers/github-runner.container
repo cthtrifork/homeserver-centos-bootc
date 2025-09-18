@@ -30,4 +30,5 @@ RestartSec=5s
 TimeoutStartSec=900
 
 [Install]
-WantedBy=multi-user.target
+# Start by default on boot
+WantedBy=multi-user.target default.target
