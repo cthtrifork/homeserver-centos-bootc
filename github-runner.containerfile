@@ -64,7 +64,7 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
      mkdir -p /etc/containers/systemd && \
-     cp -r /ctx/system_files/githubrunner/containers/* /etc/containers/systemd/
+     ln -sr /usr/share/containers/systemd/github-runner.container /etc/containers/systemd/github-runner.container
 
 # Activate services
 RUN systemctl enable docker.socket && \
