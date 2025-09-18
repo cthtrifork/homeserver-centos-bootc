@@ -1,17 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-USER=$1
+if [[ $# -ne 1 ]]; then
+  echo "Usage: $0 <username>" >&2
+  exit 1
+fi
+
+USER="$1"
+HOME_DIR="/home/$USER"
+
+HOME_DIR=/home/$USER
+cd $HOME_DIR
 
 # Setup OH-MY-BASH for user
-HOME=/home/$USER
-cd $HOME
-export OSH="$HOME/.dotfiles/oh-my-bash"; bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --unattended
+if [[ ! -d "${HOME_DIR}/.dotfiles/oh-my-bash" ]]; then
+    export OSH="$HOME_DIR/.dotfiles/oh-my-bash"; bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --unattended
 
-# modify .bashrc
-# https://github.com/ohmybash/oh-my-bash?tab=readme-ov-file
-bash -c "sed -i 's/^plugins=(git)$/plugins=(git kubectl)/g' $HOME/.bashrc"
-bash -c "echo 'export OMB_USE_SUDO=false' >> $HOME/.bashrc"
-bash -c "echo 'export DISABLE_AUTO_UPDATE=true' >> $HOME/.bashrc"
+    # modify .bashrc
+    # https://github.com/ohmybash/oh-my-bash?tab=readme-ov-file
+    sed -i 's/^plugins=(git)$/plugins=(git kubectl)/g' $HOME_DIR/.bashrc
+    echo 'export OMB_USE_SUDO=false' >> $HOME_DIR/.bashrc
+    echo 'export DISABLE_AUTO_UPDATE=true' >> $HOME_DIR/.bashrc
+fi
 
 echo "Finished setting up home for $USER"

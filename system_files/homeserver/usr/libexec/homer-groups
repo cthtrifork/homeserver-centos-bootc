@@ -18,9 +18,9 @@ do
     mkdir -m 0700 -p /home/$user/.config
     mkdir -m 0700 -p /home/$user/.docker
     chown -R $user: /home/$user
-
-    bash -u $user -c "setup-home.sh $user"
+    echo "Created home directory for $user"
   fi
+  bash -u $user -c "setup-home.sh $user"
 done
 
 # Run script if updated
