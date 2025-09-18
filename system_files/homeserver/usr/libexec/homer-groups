@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # SCRIPT VERSION
 GROUP_SETUP_VER=1
@@ -18,7 +19,7 @@ do
     mkdir -m 0700 -p /home/$user/.docker
     chown -R $user: /home/$user
 
-    bash -c "setup-home.sh $user"
+    bash -u $user -c "setup-home.sh $user"
   fi
 done
 

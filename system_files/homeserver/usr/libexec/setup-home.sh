@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 USER=$1
 
@@ -12,3 +13,5 @@ export OSH="$HOME/.dotfiles/oh-my-bash"; bash -c "$(curl -fsSL https://raw.githu
 bash -c "sed -i 's/^plugins=(git)$/plugins=(git kubectl)/g' $HOME/.bashrc"
 bash -c "echo 'export OMB_USE_SUDO=false' >> $HOME/.bashrc"
 bash -c "echo 'export DISABLE_AUTO_UPDATE=true' >> $HOME/.bashrc"
+
+echo "Finished setting up home for $USER"
