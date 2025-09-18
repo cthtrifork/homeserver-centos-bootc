@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euvo pipefail
 
 # SCRIPT VERSION
 GROUP_SETUP_VER=1
@@ -13,13 +14,14 @@ wheelarray=($(getent group wheel | cut -d ":" -f 4 | tr  ',' '\n'))
 # Setup home directory for each user in wheel group
 for user in $wheelarray
 do
+  echo "Setting up home for user: $user"
   if [[ ! -d /home/$user ]]; then
     mkdir -m 0700 -p /home/$user/.config
     mkdir -m 0700 -p /home/$user/.docker
     chown -R $user: /home/$user
-
-    bash -c "setup-home.sh $user"
+    echo "Created home directory for $user"
   fi
+  sudo -u "$user" /usr/libexec/setup-home.sh "$user"
 done
 
 # Run script if updated
