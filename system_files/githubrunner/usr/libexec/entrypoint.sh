@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd /home/runner/actions-runner || cd /actions-runner || true
+if cd /home/runner/actions-runner; then
+    echo "[entrypoint] Changed directory to /home/runner/actions-runner"
+elif cd /actions-runner; then
+    echo "[entrypoint] Changed directory to /actions-runner"
+else
+    echo "[entrypoint] ERROR: Could not change to runner directory (/home/runner/actions-runner or /actions-runner)" >&2
+    exit 1
+fi
 
 REG_TOKEN=$(curl -fsSL -X POST \
     -H "Authorization: token ${GITHUB_TOKEN}" \
