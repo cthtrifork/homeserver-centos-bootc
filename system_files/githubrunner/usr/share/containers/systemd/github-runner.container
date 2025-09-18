@@ -13,7 +13,7 @@ EnvironmentFile=/etc/homeserver/metadata/github-runner
 Environment=RUNNER_LABELS=self-hosted,Linux,X64,Ubuntu
 
 Volume=/usr/libexec/entrypoint.sh:/entrypoint.sh
-Volume=/var/lib/actions-runner/_work:/_work
+Volume=/var/lib/github-runner/_work:/_work
 
 # If you want docker-compatible socket for docker-based actions:
 Volume=/run/podman/podman.sock:/var/run/docker.sock
@@ -25,10 +25,10 @@ Exec=/bin/bash -lc "/entrypoint.sh"
 # Network=host
 
 [Service]
-User=runner
-Group=runner
+#User=runner
+#Group=runner
 
-WorkingDirectory=/var/lib/actions-runner
+#WorkingDirectory=/var/lib/actions-runner
 
 Restart=always
 RestartSec=5s
