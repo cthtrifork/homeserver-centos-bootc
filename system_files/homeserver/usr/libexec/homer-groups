@@ -21,7 +21,7 @@ do
     chown -R $user: /home/$user
     echo "Created home directory for $user"
   fi
-  bash -u $user -c "setup-home.sh $user"
+  bash -u $user -c "/usr/libexec/setup-home.sh $user"
 done
 
 # Run script if updated
