@@ -68,6 +68,6 @@ RUN systemctl enable docker.socket && \
     systemctl enable actions-runner-config.service && \
     systemctl enable actions-runner.service && \
     systemctl enable podman-auto-update.timer && \
-    systemctl enable github-runner.service
+    systemctl enable github-runner.container
 
 RUN bootc container lint
