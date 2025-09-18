@@ -61,13 +61,17 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     /ctx/build_files/cleanup.sh 
 
+RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+    --mount=type=tmpfs,dst=/tmp \
+     mkdir -p /etc/containers/systemd && \
+     cp -r /ctx/system_files/githubrunner/containers/* /etc/containers/systemd/
+
 # Activate services
 RUN systemctl enable docker.socket && \
     systemctl enable qemu-guest-agent && \
     systemctl enable podman.socket && \
     systemctl enable actions-runner-config.service && \
     systemctl enable actions-runner.service && \
-    systemctl enable podman-auto-update.timer && \
-    systemctl enable github-runner.container
-
+    systemctl enable --now podman-auto-update.timer
+    
 RUN bootc container lint
