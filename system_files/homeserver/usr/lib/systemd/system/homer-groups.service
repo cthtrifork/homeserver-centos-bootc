@@ -1,13 +1,14 @@
 [Unit]
 Description=Add wheel members to docker groups
+After=network.target
 
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/bash -eu /usr/libexec/homer-groups
-Restart=on-failure
-RestartSec=30
-StartLimitInterval=0
+StandardError=inherit
+StandardOutput=journal
 RemainAfterExit=yes
+Restart=no
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euvo pipefail
+set -euxo pipefail
 
 # SCRIPT VERSION
 GROUP_SETUP_VER=1
@@ -21,7 +21,7 @@ do
     chown -R $user: /home/$user
     echo "Created home directory for $user"
   fi
-  sudo -u "$user" /usr/libexec/setup-home.sh "$user"
+  runuser -u "$user" -- /usr/libexec/setup-home.sh "$user"
 done
 
 # Run script if updated
