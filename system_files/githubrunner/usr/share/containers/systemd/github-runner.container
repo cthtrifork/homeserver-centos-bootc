@@ -16,7 +16,7 @@ Volume=/usr/libexec/entrypoint.sh:/entrypoint.sh
 Volume=/var/lib/github-runner/_work:/_work
 
 # If you want docker-compatible socket for docker-based actions:
-Volume=/run/podman/podman.sock:/var/run/docker.sock
+Volume=/var/run/docker.sock:/var/run/docker.sock
 
 # Run our entrypoint inside the container
 Exec=/bin/bash -lc "/entrypoint.sh"
