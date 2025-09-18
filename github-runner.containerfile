@@ -72,6 +72,6 @@ RUN systemctl enable docker.socket && \
     systemctl enable podman.socket && \
     systemctl enable actions-runner-config.service && \
     systemctl enable actions-runner.service && \
-    systemctl enable --now podman-auto-update.timer
+    systemctl enable podman-auto-update.timer
     
 RUN bootc container lint
