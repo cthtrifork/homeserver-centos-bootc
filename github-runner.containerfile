@@ -61,10 +61,12 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     /ctx/build_files/cleanup.sh 
 
+# Setup github-runner.container
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
-     mkdir -p /etc/containers/systemd && \
-     ln -sr /usr/share/containers/systemd/github-runner.container /etc/containers/systemd/github-runner.container
+    mkdir -p /var/lib/github-runner/_work && \
+    mkdir -p /etc/containers/systemd && \
+    ln -sr /usr/share/containers/systemd/github-runner.container /etc/containers/systemd/github-runner.container
 
 # Activate services
 RUN systemctl enable docker.socket && \
