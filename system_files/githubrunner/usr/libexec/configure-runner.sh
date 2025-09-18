@@ -23,7 +23,7 @@ if [[ ! -f .runner ]]; then
     --url "https://github.com/${REPOSITORY}" \
     --token "${REG_TOKEN}" \
     --work "_work" \
-    --labels "${LABELS}" \
+    --labels "${RUNNER_LABELS}" \
     --unattended
 fi
 

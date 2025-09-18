@@ -66,6 +66,8 @@ RUN systemctl enable docker.socket && \
     systemctl enable qemu-guest-agent && \
     systemctl enable podman.socket && \
     systemctl enable actions-runner-config.service && \
-    systemctl enable actions-runner.service
+    systemctl enable actions-runner.service && \
+    systemctl enable --now podman-auto-update.timer && \
+    systemctl enable --now github-runner.service
 
 RUN bootc container lint

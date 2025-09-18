@@ -1,0 +1,33 @@
+[Unit]
+Description=GitHub Actions Runner
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+Image=ghcr.io/actions/actions-runner:latest
+Pull=always
+AutoUpdate=registry
+
+# Runner config & state
+EnvironmentFile=/etc/homeserver/metadata/github-runner
+Environment=RUNNER_LABELS=self-hosted,Linux,X64,Ubuntu
+
+Volume=/usr/libexec/entrypoint.sh:/entrypoint.sh
+Volume=/var/lib/actions-runner/_work:/_work
+
+# If you want docker-compatible socket for docker-based actions:
+Volume=/run/podman/podman.sock:/var/run/docker.sock
+
+# Run our entrypoint inside the container
+Exec=/bin/bash -lc "/entrypoint.sh"
+
+# (Optional) host networking if you need it
+# Network=host
+
+[Service]
+Restart=always
+RestartSec=5s
+TimeoutStartSec=900
+
+[Install]
+WantedBy=multi-user.target
