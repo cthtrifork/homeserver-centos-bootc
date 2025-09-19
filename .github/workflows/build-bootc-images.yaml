@@ -264,7 +264,7 @@ jobs:
           retention-days: 20 # 90 is the default
 
   run-on-pr:
-    runs-on: self-hosted # ubuntu-latest
+    runs-on: ["self-hosted","Ubuntu"] # ubuntu-latest
     needs: build-bootc-image
     if: ${{ github.event_name == 'pull_request' }}
     continue-on-error: false
