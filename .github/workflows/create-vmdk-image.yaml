@@ -31,7 +31,7 @@ on:
 jobs:
   create-artifact:
     name: Build ${{ inputs.image_name }} ${{ inputs.type}} image
-    runs-on: self-hosted # ubuntu-latest
+    runs-on: ["self-hosted","Ubuntu"] # ubuntu-latest
     environment: dev
     permissions:
       contents: read
