@@ -26,7 +26,7 @@ RUN dnf -y install dnf-plugins-core procps-ng file qemu-guest-agent \
     # Dev tools
     git rsync unzip jq tree curl \
     # Used by qemu for vmdk+iso creation
-    qemu-kvm qemu-img sqlite
+    qemu-kvm qemu-img sqlite buildah
 
 # Install docker
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -36,9 +36,7 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 # Create runner user
 RUN useradd --groups wheel,docker runner && \
     mkdir -m 0700 -p /home/runner/ && \
-    chown -R runner: /home/runner && \
-    mkdir -m 0700 -p /usr/share/runner && \
-    chown -R runner: /usr/share/runner
+    chown -R runner: /home/runner
 
 ENV RUNNER_VERSION=2.328.0
 RUN mkdir -p /usr/lib/actions-runner && \
@@ -63,10 +61,19 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
     /ctx/build_files/cleanup.sh 
 
+# Setup github-runner.container
+RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+    --mount=type=tmpfs,dst=/tmp \
+    mkdir -p /var/lib/github-runner/_work && \
+    mkdir -p /etc/containers/systemd && \
+    ln -sr /usr/share/containers/systemd/github-runner.container /etc/containers/systemd/github-runner.container
+
 # Activate services
 RUN systemctl enable docker.socket && \
     systemctl enable qemu-guest-agent && \
     systemctl enable podman.socket && \
-    systemctl enable actions.runner.service
-
+    systemctl enable actions-runner-config.service && \
+    systemctl enable actions-runner.service && \
+    systemctl enable podman-auto-update.timer
+    
 RUN bootc container lint

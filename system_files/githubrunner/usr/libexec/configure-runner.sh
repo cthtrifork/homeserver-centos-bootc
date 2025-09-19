@@ -23,7 +23,7 @@ if [[ ! -f .runner ]]; then
     --url "https://github.com/${REPOSITORY}" \
     --token "${REG_TOKEN}" \
     --work "_work" \
-    --labels "${LABELS}" \
+    --labels "${RUNNER_LABELS}" \
     --unattended
 fi
 
@@ -33,5 +33,12 @@ fi
 
 chmod +x run.sh
 chmod +x run-helper.sh
+
+# Setup home directory for runner user
+if [[ ! -d /home/runner ]]; then
+  mkdir -m 0700 -p /home/runner/.config
+  mkdir -m 0700 -p /home/runner/.docker
+  chown -R runner: /home/runner
+fi
 
 exit 0

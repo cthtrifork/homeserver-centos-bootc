@@ -10,8 +10,8 @@ on:
     paths:
       - "Containerfile"
       - "config.toml"
-      - "system_files/homeserver/"
-      - "build_files/"
+      - "system_files/homeserver/**"
+      - "build_files/**"
       - ".github/workflows/build-bootc-images.yaml"
   push:
     branches:
@@ -19,8 +19,8 @@ on:
     paths:
       - "Containerfile"
       - "config.toml"
-      - "system_files/homeserver/"
-      - "build_files/"
+      - "system_files/homeserver/**"
+      - "build_files/**"
       - ".github/workflows/build-bootc-images.yaml"
 
 concurrency:

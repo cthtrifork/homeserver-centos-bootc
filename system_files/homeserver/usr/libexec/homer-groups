@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euxo pipefail
 
 # SCRIPT VERSION
 GROUP_SETUP_VER=1
@@ -7,14 +8,29 @@ GROUP_SETUP_VER_FILE="/etc/homeserver/dx-groups"
 touch "$GROUP_SETUP_VER_FILE"
 GROUP_SETUP_VER_RAN=$(cat "$GROUP_SETUP_VER_FILE")
 
+# Setup Groups
+wheelarray=($(getent group wheel | cut -d ":" -f 4 | tr  ',' '\n'))
+
+# Setup home directory for each user in wheel group
+for user in $wheelarray
+do
+  echo "Setting up home for user: $user"
+  if [[ ! -d /home/$user ]]; then
+    mkdir -m 0700 -p /home/$user/.config
+    mkdir -m 0700 -p /home/$user/.docker
+    chown -R $user: /home/$user
+    echo "Created home directory for $user"
+  fi
+  runuser -u "$user" -- /usr/libexec/setup-home.sh "$user"
+done
+
 # Run script if updated
 if [[ -f $GROUP_SETUP_VER_FILE && "$GROUP_SETUP_VER" = "$GROUP_SETUP_VER_RAN" ]]; then
   echo "Group setup has already run. Exiting..."
   exit 0
 fi
 
-# Setup Groups
-wheelarray=($(getent group wheel | cut -d ":" -f 4 | tr  ',' '\n'))
+
 for user in $wheelarray
 do
   usermod -aG docker $user
@@ -24,3 +40,4 @@ done
 # Prevent future executions
 echo "Writing state file"
 echo "$GROUP_SETUP_VER" > "$GROUP_SETUP_VER_FILE"
+
