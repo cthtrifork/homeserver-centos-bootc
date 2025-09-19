@@ -41,7 +41,7 @@ env:
 jobs:
   build-bootc-image:
     name: Build image
-    runs-on: [self-hosted, Ubuntu] # ubuntu-latest
+    runs-on: [self-hosted, CentOS] # ubuntu-latest
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
@@ -199,7 +199,7 @@ jobs:
           registry: ghcr.io/${{ github.repository }}
 
   run-on-main:
-    runs-on: [self-hosted, Ubuntu] # ubuntu-latest
+    runs-on: [self-hosted, CentOS] # ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
     needs: build-bootc-image
     continue-on-error: false
@@ -264,7 +264,7 @@ jobs:
           retention-days: 20 # 90 is the default
 
   run-on-pr:
-    runs-on: [self-hosted, Ubuntu] # ubuntu-latest
+    runs-on: [self-hosted, CentOS] # ubuntu-latest
     needs: build-bootc-image
     if: ${{ github.event_name == 'pull_request' }}
     continue-on-error: false
@@ -422,7 +422,7 @@ jobs:
           category: trivy
 
   test:
-    runs-on: [self-hosted, Ubuntu] # ubuntu-latest
+    runs-on: [self-hosted, CentOS] # ubuntu-latest
     needs: build-bootc-image
     if: ${{ github.event_name == 'pull_request' }}
     continue-on-error: false
@@ -701,5 +701,6 @@ jobs:
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
+
 
 
