@@ -8,11 +8,13 @@ on:
       - main
     paths:
       - github-runner.containerfile
+      - "system_files/githubrunner/**"
   push:
     branches:
       - main
     paths:
       - github-runner.containerfile
+      - "system_files/githubrunner/**"
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true

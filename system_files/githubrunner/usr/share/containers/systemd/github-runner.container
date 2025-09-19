@@ -28,8 +28,8 @@ Exec=/bin/bash -lc "/entrypoint.sh"
 # Network=host
 
 [Service]
-#User=runner
-#Group=runner
+User=root
+Group=root
 
 #WorkingDirectory=/var/lib/actions-runner
 
