@@ -34,7 +34,11 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     /ctx/build_files/server-docker-ce.sh
 
 # Create runner user
-RUN useradd --groups wheel,docker runner && \
+ARG RUNNER_UID=10001
+ARG RUNNER_GID=10001
+RUN groupadd -g ${RUNNER_GID} runner \
+ && useradd -u ${RUNNER_UID} -g ${RUNNER_GID} runner \
+ && usermod -aG docker,wheel runner && \
     mkdir -m 0700 -p /home/runner/ && \
     chown -R runner: /home/runner
 
@@ -64,7 +68,8 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 # Setup github-runner.container
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=tmpfs,dst=/tmp \
-    mkdir -p /var/lib/github-runner/_work && \
+    mkdir -m 0700 -p /var/lib/github-runner/_work && \
+    chown -R ${RUNNER_UID}:${RUNNER_GID} /var/lib/github-runner && \
     mkdir -p /etc/containers/systemd && \
     ln -sr /usr/share/containers/systemd/github-runner.container /etc/containers/systemd/github-runner.container
 
