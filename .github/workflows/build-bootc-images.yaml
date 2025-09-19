@@ -461,7 +461,7 @@ jobs:
 
       - name: Install deps (qemu, podman, jq)
           # only run if ubuntu
-        if: ${{ runner.name == 'ubuntu-latest' }}
+        if: ${{ contains(runner.labels, 'Ubuntu') }}
         run: |
           set -e
           sudo apt-get update
