@@ -199,7 +199,7 @@ jobs:
           registry: ghcr.io/${{ github.repository }}
 
   run-on-main:
-    runs-on: self-hosted # ubuntu-latest
+    runs-on: ["self-hosted","Ubuntu"] # ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
     needs: build-bootc-image
     continue-on-error: false
