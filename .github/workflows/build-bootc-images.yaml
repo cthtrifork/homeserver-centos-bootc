@@ -41,11 +41,11 @@ env:
 jobs:
   build-bootc-image:
     name: Build image
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, CentOS] # ubuntu-latest
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
-    timeout-minutes: 10
+    timeout-minutes: 30
     outputs:
       image: ${{ steps.build-image.outputs.image }}
       tags: ${{ steps.build-image.outputs.tags }}
@@ -62,15 +62,15 @@ jobs:
         uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: ${{ github.actor }} 
           password: ${{ secrets.PAT_RENOVATEBOT }}
+          auth_file_path: $HOME/.config/containers/auth.json
+      - run: echo "REGISTRY_AUTH_FILE=/var/home/runner/.docker/config.json" >> $GITHUB_ENV
 
       - name: Load image
         shell: bash
         run: |
-          podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
+          podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest --authfile /var/home/runner/.docker/config.json
 
       - name: Get current date
         id: date
@@ -168,6 +168,8 @@ jobs:
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload trivy json report as a Github artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -197,31 +199,17 @@ jobs:
           registry: ghcr.io/${{ github.repository }}
 
   run-on-main:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, CentOS] # ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
     needs: build-bootc-image
     continue-on-error: false
-    timeout-minutes: 10
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: read
       id-token: write
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
     steps:
-      - name: Log in to the Container registry
-        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Enable podman pull
-        shell: bash
-        run: |
-          #podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
-
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
         with:
@@ -240,6 +228,8 @@ jobs:
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@192325c86100d080feab897ff886c34abd4c83a3 # v3
@@ -263,6 +253,8 @@ jobs:
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload trivy report as a Github artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -272,11 +264,11 @@ jobs:
           retention-days: 20 # 90 is the default
 
   run-on-pr:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, CentOS] # ubuntu-latest
     needs: build-bootc-image
     if: ${{ github.event_name == 'pull_request' }}
     continue-on-error: false
-    timeout-minutes: 10
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: read
@@ -299,20 +291,6 @@ jobs:
         with:
           name: base_trivy.json
           path: "${{ github.workspace }}"
-
-      - name: Log in to the Container registry
-        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Load latest image
-        shell: bash
-        run: | #sh
-          podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
 
       - name: Inspect images (Podman)
         id: meta
@@ -444,11 +422,11 @@ jobs:
           category: trivy
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, CentOS] # ubuntu-latest
     needs: build-bootc-image
     if: ${{ github.event_name == 'pull_request' }}
     continue-on-error: false
-    timeout-minutes: 10
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: read
@@ -473,6 +451,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+          auth_file_path: $HOME/.config/containers/auth.json
+      - run: echo "REGISTRY_AUTH_FILE=$HOME/.config/containers/auth.json" >> $GITHUB_ENV
 
       - name: Load PR image
         shell: bash
@@ -480,6 +460,8 @@ jobs:
           sudo podman load -q -i ${{ github.workspace }}/pr-image.tar.gz
 
       - name: Install deps (qemu, podman, jq)
+          # only run if ubuntu
+        if: ${{ contains(runner.labels, 'Ubuntu') }}
         run: |
           set -e
           sudo apt-get update
@@ -719,5 +701,7 @@ jobs:
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
+
+
 
 
