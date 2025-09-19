@@ -15,11 +15,9 @@ Environment=RUNNER_LABELS=self-hosted,Linux,X64,Ubuntu
 #Environment=RUNNER_GID=10001
 Environment=RUNNER_ALLOW_RUNASROOT=1
 
-Volume=/usr/libexec/entrypoint.sh:/entrypoint.sh
-Volume=/var/lib/github-runner/_work:/_work
-
-# If you want docker-compatible socket for docker-based actions:
-Volume=/var/run/docker.sock:/var/run/docker.sock
+Volume=/usr/libexec/entrypoint.sh:/entrypoint.sh:ro,Z
+Volume=/var/lib/github-runner/_work:/_work:Z
+Volume=/var/run/docker.sock:/var/run/docker.sock:Z
 
 # Run our entrypoint inside the container
 Exec=/bin/bash -lc "/entrypoint.sh"
