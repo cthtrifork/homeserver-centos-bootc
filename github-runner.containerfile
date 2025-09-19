@@ -34,8 +34,8 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     /ctx/build_files/server-docker-ce.sh
 
 # Create runner user
-ARG RUNNER_UID=10001
-ARG RUNNER_GID=10001
+ARG RUNNER_UID=1001
+ARG RUNNER_GID=1001
 RUN groupadd -g ${RUNNER_GID} runner \
  && useradd -u ${RUNNER_UID} -g ${RUNNER_GID} runner \
  && usermod -aG docker,wheel runner && \
