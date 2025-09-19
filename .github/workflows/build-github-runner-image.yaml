@@ -30,7 +30,7 @@ env:
 jobs:
   build-bootc-image:
     name: Build Github Runner bootable container image
-    runs-on: self-hosted # ubuntu-latest
+    runs-on: ["self-hosted","Ubuntu"] # ubuntu-latest
     continue-on-error: false
     timeout-minutes: 10
     outputs:
