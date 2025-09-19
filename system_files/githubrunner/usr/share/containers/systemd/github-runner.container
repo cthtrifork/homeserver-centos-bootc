@@ -11,8 +11,9 @@ AutoUpdate=registry
 # Runner config & state
 EnvironmentFile=/etc/homeserver/metadata/github-runner
 Environment=RUNNER_LABELS=self-hosted,Linux,X64,Ubuntu
-Environment=RUNNER_UID=10001
-Environment=RUNNER_GID=10001
+#Environment=RUNNER_UID=10001
+#Environment=RUNNER_GID=10001
+Environment=RUNNER_ALLOW_RUNASROOT=1
 
 Volume=/usr/libexec/entrypoint.sh:/entrypoint.sh
 Volume=/var/lib/github-runner/_work:/_work
