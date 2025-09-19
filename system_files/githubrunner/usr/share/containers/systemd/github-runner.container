@@ -15,7 +15,7 @@ Environment=RUNNER_LABELS=self-hosted,Linux,X64,Ubuntu
 #Environment=RUNNER_GID=10001
 Environment=RUNNER_ALLOW_RUNASROOT=1
 
-Volume=/usr/libexec/entrypoint.sh:/entrypoint.sh:ro,Z
+Volume=/usr/libexec/entrypoint.sh:/entrypoint.sh:ro
 Volume=/var/lib/github-runner/_work:/_work:Z
 Volume=/var/run/docker.sock:/var/run/docker.sock:Z
 
