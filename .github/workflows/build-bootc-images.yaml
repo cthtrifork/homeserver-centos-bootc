@@ -174,7 +174,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           key: ${{ runner.os }}-base_trivy-${{ github.sha }}
-          path: "${{ github.workspace }}/base_trivy.json
+          path: "${{ github.workspace }}/base_trivy.json"
 
       - name: Publish Trivy Output to Summary
         run: | #sh
