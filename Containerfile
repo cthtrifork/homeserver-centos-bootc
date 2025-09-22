@@ -14,9 +14,23 @@ RUN echo VARIANT="HomeServer bootc OS" && echo VARIANT_ID=com.github.caspertdk.h
 ARG REGISTRY_URL
 ARG REGISTRY_USERNAME
 
-RUN --mount=type=secret,id=creds,required=true cp /run/secrets/creds /usr/lib/container-auth.json && \
+RUN --mount=type=secret,id=creds,required=true \
+    cp /run/secrets/creds /usr/lib/container-auth.json && \
     chmod 0600 /usr/lib/container-auth.json && \
-    ln -sr /usr/lib/container-auth.json /etc/ostree/auth.json
+    \
+    # For rpm-ostree / bootc / ostree-container pulls
+    ln -srf /usr/lib/container-auth.json /etc/ostree/auth.json && \
+    \
+    # For podman/skopeo/buildah (root context)
+    mkdir -p /etc/containers && \
+    ln -srf /usr/lib/container-auth.json /etc/containers/auth.json && \
+    \
+    # For docker CLI (real Docker or the podman-docker shim): per-daemon fallback
+    mkdir -p /etc/docker && \
+    ln -srf /usr/lib/container-auth.json /etc/docker/config.json && \
+    \
+    # Make sure all CLI tools that respect containers/image see the same file
+    printf 'export REGISTRY_AUTH_FILE=/etc/containers/auth.json\n' > /etc/profile.d/registry-auth.sh
 
 # Install common utilities
 #RUN dnf -y group install 'Development Tools' # this one is huge and includes java!

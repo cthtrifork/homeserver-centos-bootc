@@ -24,7 +24,7 @@ fi
 
 # Setup .gitconfig for user
 if [[ -f "/home/$USER/.ssh/id_ed25519.pub" ]]; then
-  cat <<'EOT' | tee /home/$USER/.gitconfig > /dev/null
+  cat <<EOT | tee /home/$USER/.gitconfig > /dev/null
 [user]
     name = Casper Thygesen
     email = cth@trifork.com

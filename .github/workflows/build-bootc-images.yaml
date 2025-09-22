@@ -676,6 +676,20 @@ jobs:
             -p 2222 \
             ${SSH_USERNAME}@localhost
 
+      - name: Verify ghcr auth
+        env:
+          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        run: | #sh
+          # turn the env string into a Bash array
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+          ssh "${SSH_OPTS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+            "podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest"
+
       # - name: /etc drift detector (fail on unexpected drift)
       #   env:
       #     SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
