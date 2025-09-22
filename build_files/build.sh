@@ -22,6 +22,5 @@ chmod 600 /etc/homeserver/metadata/pinggy
 /ctx/build_files/server-docker-ce.sh
 /ctx/build_files/utilities.sh
 /ctx/build_files/systemd.sh
-/ctx/build_files/cleanup.sh
 
 log "Build process completed"

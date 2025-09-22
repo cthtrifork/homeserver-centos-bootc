@@ -124,7 +124,7 @@ jobs:
           chmod 600 /tmp/PINGGY_TOKEN
 
       - name: Use buildah build to create the image
-        id: build-image
+        id: build-image2
         uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
         with:
           context: ${{ env.CONTEXT }}
@@ -143,6 +143,26 @@ jobs:
             --secret id=registry_token,src=/tmp/REGISTRY_TOKEN
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
             --secret id=creds,src=/tmp/creds
+
+      - name: Build image with Buildx
+        id: build-image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.CONTEXT }}
+          file: ${{ env.CONTEXT }}/Containerfile
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
+          push: false
+          build-args: |
+            REGISTRY_USERNAME=${{ github.repository_owner }}
+            REGISTRY_URL=ghcr.io
+            PINGGY_HOST=${{ vars.PINGGY_HOST }}
+          secrets: |
+            id=registry_token,src=/tmp/REGISTRY_TOKEN
+            id=pinggy_token,src=/tmp/PINGGY_TOKEN
+            id=creds,src=/tmp/creds
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # Save PR image as tar so Trivy can scan without pushing
       - name: Save PR image as tar for Trivy

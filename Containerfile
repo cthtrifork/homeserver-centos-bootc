@@ -20,7 +20,8 @@ RUN --mount=type=secret,id=creds,required=true cp /run/secrets/creds /usr/lib/co
 
 # Install common utilities
 #RUN dnf -y group install 'Development Tools' # this one is huge and includes java!
-RUN dnf -y install \
+RUN --mount=type=cache,dst=/var/cache \
+    dnf -y install \
       dnf-plugins-core \
       procps-ng \
       curl \
@@ -39,12 +40,17 @@ RUN dnf -y install \
 
 ARG PINGGY_HOST
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
-    #--mount=type=cache,dst=/var/cache \
-    #--mount=type=cache,dst=/var/log \
+    --mount=type=cache,dst=/var/cache \
+    --mount=type=cache,dst=/var/log \
     --mount=type=tmpfs,dst=/tmp \
     --mount=type=secret,id=pinggy_token,required=true PINGGY_TOKEN="$(cat /run/secrets/pinggy_token)" \
     PINGGY_HOST="${PINGGY_HOST}" \
     /ctx/build_files/build.sh
+
+RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
+    --mount=type=tmpfs,dst=/tmp \
+    PINGGY_HOST="${PINGGY_HOST}" \
+    /ctx/build_files/cleanup.sh
 
 # Networking
 #EXPOSE 8006
