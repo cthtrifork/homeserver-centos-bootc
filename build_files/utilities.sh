@@ -86,6 +86,12 @@ curl -sLo /tmp/cosign \
 install -o root -g root -m 0755 /tmp/cosign /usr/bin/cosign
 /usr/bin/cosign completion bash > /etc/bash_completion.d/cosign
 
+log "Installing shfmt"
+SHFMT_VERSION="v3.12.0" # renovate: datasource=github-releases depName=mvdan/sh
+curl -sLo /tmp/shfmt \
+    "$(/ctx/build_files/github-release-url.sh mvdan/sh ${MACHINE}.${ARCH} $SHFMT_VERSION)"
+install -o root -g root -m 0755 /tmp/shfmt /usr/bin/shfmt
+
 log "Installing helm"
 HELM_VERSION=$(curl -L -s https://get.helm.sh/helm-latest-version)
 HELM_VERSION="v3.19.0" # renovate: datasource=github-releases depName=helm/helm
