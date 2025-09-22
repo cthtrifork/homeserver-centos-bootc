@@ -151,9 +151,9 @@ jobs:
 
       - name: Upload PR image as a Github artifact
         if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/cache/save@v4
         with:
-          name: pr-image
+          key: ${{ runner.os }}-pr-image-${{ github.sha }}
           path: "${{ github.workspace }}/pr-image.tar.gz"
 
       - name: Trivy (base:latest)
@@ -170,10 +170,11 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: true
 
       - name: Upload trivy json report as a Github artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/cache/save@v4
         with:
-          name: base_trivy.json
-          path: "${{ github.workspace }}/base_trivy.json"
+          key: ${{ runner.os }}-base_trivy-${{ github.sha }}
+          path: "${{ github.workspace }}/base_trivy.json
 
       - name: Publish Trivy Output to Summary
         run: | #sh
@@ -306,16 +307,19 @@ jobs:
           cache: true
 
       - name: Download PR image
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        uses: actions/cache/restore@v4
         with:
-          name: pr-image
-          path: "${{ github.workspace }}"
+          path: ${{ github.workspace }}/pr-image.tar.gz
+          key: ${{ runner.os }}-pr-image-${{ github.sha }}
+          fail-on-cache-miss: true
 
       - name: Download base_trivy.json
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        uses: actions/cache/restore@v4
         with:
-          name: base_trivy.json
-          path: "${{ github.workspace }}"
+          path: ${{ github.workspace }}/base_trivy.json
+          key: ${{ runner.os }}-base_trivy-${{ github.sha }}
+          fail-on-cache-miss: true
+
 
       - name: Log in to the Container registry
         uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
@@ -480,10 +484,11 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Download PR image
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        uses: actions/cache/restore@v4
         with:
-          name: pr-image
-          path: "${{ github.workspace }}"
+          path: ${{ github.workspace }}/pr-image.tar.gz
+          key: ${{ runner.os }}-pr-image-${{ github.sha }}
+          fail-on-cache-miss: true
 
       - name: Log in to the Container registry
         uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
