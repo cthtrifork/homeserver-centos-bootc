@@ -1,39 +1,48 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:best-practices",
-    ":disableDigestUpdates"
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'config:best-practices',
+    ':disableDigestUpdates',
   ],
-  "digest": {
-    "enabled": false
+  digest: {
+    enabled: false,
   },
-  "rebaseWhen": "auto",
-  "packageRules": [
+  rebaseWhen: 'auto',
+  packageRules: [
     {
-      "automerge": true,
-      "pinDigests": false,
-      "matchUpdateTypes": ["major", "minor", "patch"]
+      automerge: true,
+      pinDigests: false,
+      matchUpdateTypes: [
+        'major',
+        'minor',
+        'patch',
+      ],
     },
     {
-        automerge: true,
-        "pinDigests": false,
-        matchManagers: [
-          'github-actions',
-        ],
-        matchUpdateTypes: ["major", "minor", "patch"]
+      automerge: true,
+      pinDigests: false,
+      matchManagers: [
+        'github-actions',
+      ],
+      matchUpdateTypes: [
+        'major',
+        'minor',
+        'patch',
+      ],
     },
   ],
-  "regexManagers": [
+  customManagers: [
     {
-      "fileMatch": ["^build_files/.*\\.sh$"],
-      // Match lines like: FOO_VERSION="v1.2.3"
-      "matchStrings": [
-        // With inline hint (preferred)
-        "(?<depName>[^\\s\"']+)=\"?(?<currentValue>v?\\d+[^\"'\\s]*)\"?\\s+# renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<packageName>[^\\s]+)"
+      customType: 'regex',
+      managerFilePatterns: [
+        '/^build_files/.*\\.sh$/',
       ],
-      "datasourceTemplate": "{{{datasource}}}",
-      "packageNameTemplate": "{{{packageName}}}",
-      "versioningTemplate": "semver"
-    }
-  ]
+      matchStrings: [
+        '(?<depName>[^\\s"\']+)="?(?<currentValue>v?\\d+[^"\'\\s]*)"?\\s+# renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<packageName>[^\\s]+)',
+      ],
+      datasourceTemplate: '{{{datasource}}}',
+      packageNameTemplate: '{{{packageName}}}',
+      versioningTemplate: 'semver',
+    },
+  ],
 }
