@@ -147,14 +147,14 @@ jobs:
       # Save PR image as tar so Trivy can scan without pushing
       - name: Save PR image as tar for Trivy
         if: ${{ github.event_name == 'pull_request' }}
-        run: podman save "${{ env.PR_IMAGE }}" | gzip > pr-image.tar.gz
+        run: podman save "${{ env.PR_IMAGE }}"  > pr-image.tar
 
       - name: Upload PR image as a Github artifact
         if: ${{ github.event_name == 'pull_request' }}
         uses: actions/cache/save@v4
         with:
           key: ${{ runner.os }}-pr-image-${{ github.sha }}
-          path: "${{ github.workspace }}/pr-image.tar.gz"
+          path: "${{ github.workspace }}/pr-image.tar"
 
       - name: Trivy (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
@@ -309,7 +309,7 @@ jobs:
       - name: Download PR image
         uses: actions/cache/restore@v4
         with:
-          path: ${{ github.workspace }}/pr-image.tar.gz
+          path: ${{ github.workspace }}/pr-image.tar
           key: ${{ runner.os }}-pr-image-${{ github.sha }}
           fail-on-cache-miss: true
 
@@ -340,7 +340,7 @@ jobs:
         shell: bash
         run: | #sh
           set -euo pipefail
-          podman load -q -i ${{ github.workspace }}/pr-image.tar.gz
+          podman load -q -i ${{ github.workspace }}/pr-image.tar
           podman images
 
           BASE_RAW=$(podman image inspect "${{ env.BASE_IMAGE }}" | jq '.[0]')
@@ -373,7 +373,7 @@ jobs:
       - name: Trivy (PR)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: pr-image.tar.gz
+          input: pr-image.tar
           format: json
           output: pr_trivy.json
           ignore-unfixed: true
@@ -445,7 +445,7 @@ jobs:
       - name: Trivy REPORT (PR)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: pr-image.tar.gz
+          input: pr-image.tar
           ignore-unfixed: true
           severity: HIGH,CRITICAL
           format: "sarif"
@@ -486,7 +486,7 @@ jobs:
       - name: Download PR image
         uses: actions/cache/restore@v4
         with:
-          path: ${{ github.workspace }}/pr-image.tar.gz
+          path: ${{ github.workspace }}/pr-image.tar
           key: ${{ runner.os }}-pr-image-${{ github.sha }}
           fail-on-cache-miss: true
 
@@ -500,7 +500,7 @@ jobs:
       - name: Load PR image
         shell: bash
         run: | #sh
-          sudo podman load -q -i ${{ github.workspace }}/pr-image.tar.gz
+          sudo podman load -q -i ${{ github.workspace }}/pr-image.tar
 
       - name: Install deps (qemu, podman, jq)
         run: |
