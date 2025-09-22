@@ -13,13 +13,13 @@
 
 ORG_PROJ=${1}
 ARCH_FILTER=${2}
-LATEST=${3}
+GH_VERSION=${3}
 
 usage() {
     echo "$0 ORG_PROJ ARCH_FILTER"
     echo "    ORG_PROJ    - organization/projectname"
     echo "    ARCH_FILTER - optional extra filter to further limit rpm selection"
-    echo "    LATEST      - optional tag override for latest release (eg, nightly-dev)"
+    echo "    GH_VERSION      - optional tag override for latest release (eg, nightly-dev)"
 
 }
 
@@ -33,10 +33,10 @@ if [ -z "${ARCH_FILTER}" ]; then
     exit 2
 fi
 
-if [ -z "${LATEST}" ]; then
+if [ -z "${GH_VERSION}" ]; then
     RELTAG="latest"
 else
-    RELTAG="tags/${LATEST}"
+    RELTAG="tags/${GH_VERSION}"
 fi
 
 set ${SET_X:+-x} -eou pipefail
