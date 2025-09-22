@@ -23,10 +23,10 @@ do
   install -o $user -g $user -m 0700 -d /home/$user/.docker
   install -o $user -g $user -m 0700 -d /home/$user/.config/containers
 
-  ln -sf /etc/containers/auth.json /home/$user/.config/containers/auth.json
-  ln -sf /usr/lib/container-auth.json /home/$user/.docker/config.json
-  #rsync --chown=$user:$user /etc/containers/auth.json /home/$user/.config/containers/auth.json # for podman
-  #rsync --chown=$user:$user /usr/lib/container-auth.json /home/$user/.docker/config.json # for docker CLI
+  #ln -sf /etc/containers/auth.json /home/$user/.config/containers/auth.json
+  #ln -sf /usr/lib/container-auth.json /home/$user/.docker/config.json
+  rsync --chown=$user:$user /etc/containers/auth.json /home/$user/.config/containers/auth.json # for podman
+  rsync --chown=$user:$user /usr/lib/container-auth.json /home/$user/.docker/config.json # for docker CLI
   runuser -u "$user" -- /usr/libexec/setup-home.sh "$user"
 done
 
