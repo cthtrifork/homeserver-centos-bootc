@@ -1,3 +1,4 @@
 vmdk/
 manifest-*.json
 *.vmdk
+*.key
