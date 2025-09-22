@@ -4,7 +4,7 @@ on:
     - cron: "0 3 * * 0" # Runs at 03:00, only on Sunday for security patching
   workflow_dispatch:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
     branches:
       - main
     paths:
@@ -525,7 +525,7 @@ jobs:
           } > out/config.toml
 
           cat ./out/config.toml
- 
+
       - name: Configure Podman
         shell: bash
         run: | #sh
@@ -661,7 +661,7 @@ jobs:
             -p 2222 \
             ${SSH_USERNAME}@localhost \
             "systemctl is-system-running --wait"
-          
+
       - name: Basic health checks
         env:
           CORE_SERVICES: "sshd NetworkManager"
@@ -737,5 +737,3 @@ jobs:
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
-
-
