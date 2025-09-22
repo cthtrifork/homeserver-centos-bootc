@@ -688,7 +688,7 @@ jobs:
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
-            "podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest"
+            "REGISTRY_AUTH_FILE=/etc/containers/auth.json podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest"
 
       # - name: /etc drift detector (fail on unexpected drift)
       #   env:
