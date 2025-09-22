@@ -22,8 +22,9 @@ install -o root -g root -m 0755 /tmp/kubectl /usr/bin/kubectl
 /usr/bin/kubectl completion bash >/etc/bash_completion.d/kubectl.sh
 
 log "Installing kubelogin"
+KUBELOGIN_VERSION="v1.34.1" # renovate: datasource=github-releases depName=cli/cli
 curl -sLo /tmp/kubelogin.zip \
-    "$(/ctx/build_files/github-release-url.sh int128/kubelogin ${MACHINE}.${ARCH}.zip)"
+    "$(/ctx/build_files/github-release-url.sh int128/kubelogin ${MACHINE}.${ARCH}.zip $KUBELOGIN_VERSION)"
 unzip /tmp/kubelogin.zip -d /usr/bin/ -x "LICENSE" "README.md"
 # Create symlinks so kubectl recognizes the plugin
 ln -sf /usr/bin/kubelogin /usr/bin/kubectl-oidc-login

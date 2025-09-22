@@ -22,5 +22,18 @@
         ],
         matchUpdateTypes: ["major", "minor", "patch"]
     },
+  ],
+  "regexManagers": [
+    {
+      "fileMatch": ["^build_files/.*\\.sh$"],
+      // Match lines like: FOO_VERSION="v1.2.3"
+      "matchStrings": [
+        // With inline hint (preferred)
+        "(?<depName>[^\\s\"']+)=\"?(?<currentValue>v?\\d+[^\"'\\s]*)\"?\\s+# renovate:\\s*datasource=(?<datasource>[^\\s]+)\\s+depName=(?<packageName>[^\\s]+)"
+      ],
+      "datasourceTemplate": "{{{datasource}}}",
+      "packageNameTemplate": "{{{packageName}}}",
+      "versioningTemplate": "semver"
+    }
   ]
 }
