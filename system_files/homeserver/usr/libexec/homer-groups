@@ -21,6 +21,7 @@ do
     chown -R $user: /home/$user
     echo "Created home directory for $user"
   fi
+  mkdir -p /home/$user/.config/containers
   cp /etc/containers/auth.json /home/$user/.config/containers/auth.json # for podman
   chown $user:$user /home/$user/.config/containers/auth.json
   cp /usr/lib/container-auth.json /home/$user/.docker/config.json # for docker CLI
