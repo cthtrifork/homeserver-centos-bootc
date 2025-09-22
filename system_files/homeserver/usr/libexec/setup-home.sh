@@ -22,4 +22,21 @@ if [[ ! -d "${HOME_DIR}/.dotfiles/oh-my-bash" ]]; then
     echo 'export DISABLE_AUTO_UPDATE=true' >> $HOME_DIR/.bashrc
 fi
 
+# Setup .gitconfig for user
+if [[ -f "/home/$USER/.ssh/id_ed25519.pub" ]]; then
+  cat <<'EOT' | tee /home/$USER/.gitconfig > /dev/null
+[user]
+    name = Casper Thygesen
+    email = cth@trifork.com
+    signingkey = /home/$USER/.ssh/id_ed25519.pub
+[gpg]
+    format = ssh
+[commit]
+    gpgsign = true
+[init]
+    defaultBranch = main
+EOT
+  chown $USER:$USER /home/$USER/.gitconfig
+fi
+
 echo "Finished setting up home for $USER"
