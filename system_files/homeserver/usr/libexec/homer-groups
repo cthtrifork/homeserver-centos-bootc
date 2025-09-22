@@ -16,16 +16,17 @@ for user in $wheelarray
 do
   echo "Setting up home for user: $user"
   if [[ ! -d /home/$user ]]; then
-    mkdir -m 0700 -p /home/$user/.config
-    mkdir -m 0700 -p /home/$user/.docker
     chown -R $user: /home/$user
     echo "Created home directory for $user"
   fi
-  mkdir -p /home/$user/.config/containers
-  cp /etc/containers/auth.json /home/$user/.config/containers/auth.json # for podman
-  chown $user:$user /home/$user/.config/containers/auth.json
-  cp /usr/lib/container-auth.json /home/$user/.docker/config.json # for docker CLI
-  chown $user:$user /home/$user/.docker/config.json
+
+  install -o $user -g $user -m 0700 -d /home/$user/.docker
+  install -o $user -g $user -m 0700 -d /home/$user/.config/containers
+
+  ln -sf /etc/nginx/nginx.conf nginx.conf /etc/containers/auth.json /home/$user/.config/containers/auth.json
+  ln -sf /etc/nginx/nginx.conf nginx.conf /usr/lib/container-auth.json /home/$user/.docker/config.json
+  #rsync --chown=$user:$user /etc/containers/auth.json /home/$user/.config/containers/auth.json # for podman
+  #rsync --chown=$user:$user /usr/lib/container-auth.json /home/$user/.docker/config.json # for docker CLI
   runuser -u "$user" -- /usr/libexec/setup-home.sh "$user"
 done
 
