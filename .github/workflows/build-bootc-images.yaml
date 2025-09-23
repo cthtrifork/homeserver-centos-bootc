@@ -152,7 +152,7 @@ jobs:
       - name: Save PR image as tar
         run: |
           #podman save --format docker-archive -o app-all-tags.tar $(podman images --format '{{.Repository}}:{{.Tag}}' | grep '^localhost/${{ env.IMAGE_NAME }}:')
-          podman save "${{ env.PR_IMAGE }}"  > image.tar
+          podman save "${{ env.PR_IMAGE }}" > image.tar
 
       - name: Upload PR image
         uses: actions/cache/save@v4
@@ -255,10 +255,8 @@ jobs:
           set -euo pipefail
           podman load -q -i ${{ github.workspace }}/image.tar
           podman images
-          IMAGE_ID=$(podman images --format "{{.ID}}" | head -n1) # todo: find a better way
-          echo "loaded ${IMAGE_ID}"
           for tag in $TAGS; do
-            podman tag "$IMAGE_ID" "localhost/${{ env.IMAGE_NAME }}:$tag"
+            podman tag "${{ env.PR_IMAGE }}" "localhost/${{ env.IMAGE_NAME }}:$tag"
           done
         env:
           TAGS: ${{ needs.build-bootc-image.outputs.tags }}
