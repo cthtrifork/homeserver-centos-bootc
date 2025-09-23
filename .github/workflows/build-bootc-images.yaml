@@ -430,7 +430,7 @@ jobs:
       - name: Trivy (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: ${{ env.BASE_IMAGE }} # todo
+          image-ref: ${{ env.BASE_IMAGE }}
           format: json
           output: base_trivy.json
           ignore-unfixed: true
@@ -546,10 +546,7 @@ jobs:
         run: | #sh
           sudo podman load -q -i ${{ github.workspace }}/image.tar
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Install deps (socat, sqlite3)
+      - name: Install deps (socat sqlite3 qemu-system-x86 qemu-utils)
         run: |
           set -e
           sudo apt-get update -qq
