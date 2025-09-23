@@ -34,6 +34,7 @@ env:
   #IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}" # do not edit
   DEFAULT_TAG: "latest"
   IMAGE_NAME: homeserver-centos-bootc
+  IMAGE_FULL: ghcr.io/${{ github.repository }}/homeserver-centos-bootc
   BASE_IMAGE: ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest
   PR_IMAGE: localhost/homeserver-centos-bootc:latest # this should work when the image has been built
   CONTEXT: ./
@@ -201,18 +202,39 @@ jobs:
         uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
         if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
 
+      - name: Compose immutable image ref (by digest)
+        id: ref
+        run: |
+          echo "IMAGE_REF=ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}@${{ steps.push-to-ghcr.outputs.digest }}" >> $GITHUB_OUTPUT
+
+
       - name: Sign container image
         if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
         run: |
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}@${TAGS}
-          IMAGE_FULL="ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}"
+          cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ steps.ref.outputs.IMAGE_REF }}
           for tag in ${{ steps.metadata.outputs.tags }}; do
-            cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE_FULL:$tag
+            cosign sign -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}:$tag
           done
         env:
           TAGS: ${{ steps.push-to-ghcr.outputs.digest }}
           COSIGN_EXPERIMENTAL: false
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+
+      - name: Attach build provenance attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: "ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}"
+          subject-digest: ${{ steps.push-to-ghcr.outputs.digest }}
+          push-to-registry: true
+
+      - name: Cosign attest vulnerability results
+        run: |
+          # Attach the Trivy JSON as an attestation of type "vuln"
+          cosign attest \
+            --yes \
+            --type vuln \
+            --predicate base_trivy.json \
+            ${{ steps.ref.outputs.IMAGE_REF }}
 
   run-on-main:
     runs-on: ubuntu-latest
