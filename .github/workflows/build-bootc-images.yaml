@@ -145,11 +145,9 @@ jobs:
 
       # Save PR image as tar so Trivy can scan without pushing
       - name: Save PR image as tar for Trivy
-        if: ${{ github.event_name == 'pull_request' }}
         run: podman save "${{ env.PR_IMAGE }}"  > pr-image.tar
 
       - name: Upload PR image as a Github artifact
-        if: ${{ github.event_name == 'pull_request' }}
         uses: actions/cache/save@v4
         with:
           key: ${{ runner.os }}-pr-image-${{ github.sha }}
@@ -228,6 +226,18 @@ jobs:
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
         with:
           cache: true
+
+      - name: Download PR image
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/pr-image.tar
+          key: ${{ runner.os }}-pr-image-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - name: Load latest image
+        shell: bash
+        run: | #sh
+          podman pull ${{ env.IMAGE_FULL }}:latest
 
       - name: Push to Container registry
         id: push-to-ghcr
@@ -348,6 +358,11 @@ jobs:
           key: ${{ runner.os }}-pr-image-${{ github.sha }}
           fail-on-cache-miss: true
 
+      - name: Load latest image
+        shell: bash
+        run: | #sh
+          podman pull ${{ env.IMAGE_FULL }}:latest
+
       - name: Download base_trivy.json
         uses: actions/cache/restore@v4
         with:
@@ -355,12 +370,7 @@ jobs:
           key: ${{ runner.os }}-base_trivy-${{ github.sha }}
           fail-on-cache-miss: true
 
-      - name: Load latest image
-        shell: bash
-        run: | #sh
-          podman pull ${{ env.IMAGE_FULL }}:latest
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
+
 
       - name: Inspect images (Podman)
         id: meta
