@@ -94,7 +94,7 @@ jobs:
           tags: |
             type=raw,value=${{ env.DEFAULT_TAG }},enable={{is_default_branch}}
             type=raw,value=${{ env.VERSION }}
-            type=raw,value=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
+            type=raw,enable={{is_default_branch}},value=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
             type=raw,value={{date 'YYYYMMDD'}}
             type=sha,format=long,enable=${{ github.event_name == 'pull_request' }}
             type=ref,event=pr
@@ -254,7 +254,7 @@ jobs:
         run: | #sh
           IMAGE_ID=$(podman load -q -i ${{ github.workspace }}/image.tar)
           for t in $TAGS; do
-            podman tag "$IMAGE_ID" "$t"
+            podman tag "$IMAGE_ID" "${{ needs.build-bootc-image.outputs.image }}:$t"
           done
         env:
           TAGS: ${{ needs.build-bootc-image.outputs.tags }}
