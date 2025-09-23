@@ -254,6 +254,8 @@ jobs:
         run: | #sh
           set -euo pipefail
           IMAGE_ID=$(podman load -q -i ${{ github.workspace }}/image.tar)
+          podman images
+          echo "loaded ${IMAGE_ID}"
           for t in $TAGS; do
             podman tag "$IMAGE_ID" "ghcr.io/${{ github.repository }}/${{ needs.build-bootc-image.outputs.image }}:$t"
           done
