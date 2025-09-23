@@ -4,7 +4,7 @@ on:
     - cron: "0 3 * * 0" # Runs at 03:00, only on Sunday for security patching
   workflow_dispatch:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
     branches:
       - main
     paths:
@@ -33,9 +33,11 @@ env:
   REPO_NAME: "${{ github.event.repository.name }}" # output image name, usually same as repo name
   #IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}" # do not edit
   DEFAULT_TAG: "latest"
+  VERSION: "0.1.${{ github.run_number }}"
   IMAGE_NAME: homeserver-centos-bootc
+  IMAGE_FULL: ghcr.io/${{ github.repository }}/homeserver-centos-bootc
   BASE_IMAGE: ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest
-  PR_IMAGE: localhost/homeserver-centos-bootc:latest # this should work when the image has been built
+  PR_IMAGE: localhost/homeserver-centos-bootc:0.1.${{ github.run_number }} # this should work when the image has been built
   CONTEXT: ./
 
 jobs:
@@ -51,10 +53,15 @@ jobs:
       tags: ${{ steps.build-image.outputs.tags }}
     permissions:
       contents: read
-      packages: write
+      packages: read
       id-token: write
 
     steps:
+      - name: Manual Trivy Setup
+        uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
+        with:
+          cache: true
+
       - name: Clone the repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
@@ -68,9 +75,7 @@ jobs:
       - name: Load image
         shell: bash
         run: |
-          podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
+          podman pull -q ${{ env.BASE_IMAGE }}
 
       - name: Get current date
         id: date
@@ -87,11 +92,11 @@ jobs:
           # This generates all the tags for your image, you can add custom tags here too!
           # Default tags are "$DEFAULT_TAG" and "$DEFAULT_TAG.$date".
           tags: |
-            type=raw,value=${{ env.DEFAULT_TAG }}
-            type=raw,value=0.1.${{ github.run_number }}
-            type=raw,value=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
-            type=raw,value={{date 'YYYYMMDD'}}
-            type=sha,enable=${{ github.event_name == 'pull_request' }}
+            type=raw,value=${{ env.DEFAULT_TAG }},enable={{is_default_branch}}
+            type=raw,value=${{ env.VERSION }}
+            type=raw,enable={{is_default_branch}},value=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
+            type=raw,enable={{is_default_branch}},value={{date 'YYYYMMDD'}}
+            type=sha,enable=${{ github.event_name == 'pull_request' }},format=long
             type=ref,event=pr
           labels: |
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
@@ -144,26 +149,40 @@ jobs:
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
             --secret id=creds,src=/tmp/creds
 
-      # Save PR image as tar so Trivy can scan without pushing
-      - name: Save PR image as tar for Trivy
-        if: ${{ github.event_name == 'pull_request' }}
-        run: podman save "${{ env.PR_IMAGE }}"  > pr-image.tar
+      - name: Save PR image as tar
+        run: |
+          #podman save --format docker-archive -o app-all-tags.tar $(podman images --format '{{.Repository}}:{{.Tag}}' | grep '^localhost/${{ env.IMAGE_NAME }}:')
+          podman save "${{ env.PR_IMAGE }}" > image.tar
 
-      - name: Upload PR image as a Github artifact
-        if: ${{ github.event_name == 'pull_request' }}
+      - name: Upload PR image
         uses: actions/cache/save@v4
         with:
           key: ${{ runner.os }}-pr-image-${{ github.sha }}
-          path: "${{ github.workspace }}/pr-image.tar"
+          path: "${{ github.workspace }}/image.tar"
 
-      - name: Trivy (base:latest)
+      - name: Trivy REPORT table (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: ${{ env.BASE_IMAGE }}
-          format: json
-          output: base_trivy.json
+          input: image.tar
           ignore-unfixed: true
           #severity: HIGH,CRITICAL
+          format: table
+          output: trivy-results.txt
+          skip-setup-trivy: true
+          scanners: "vuln"
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
+
+      - name: Trivy vuln scan (JSON)
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          input: image.tar
+          format: json
+          output: trivy.json
+          ignore-unfixed: true
+          #severity: HIGH,CRITICAL
+          skip-setup-trivy: true
           scanners: "vuln"
         env:
           TRIVY_SKIP_DB_UPDATE: true
@@ -173,59 +192,38 @@ jobs:
         if: ${{ github.event_name == 'pull_request' }}
         uses: actions/cache/save@v4
         with:
-          key: ${{ runner.os }}-base_trivy-${{ github.sha }}
-          path: "${{ github.workspace }}/base_trivy.json"
-
+          key: ${{ runner.os }}-trivy-${{ github.sha }}
+          path: "${{ github.workspace }}/trivy.json"
+    
       - name: Publish Trivy Output to Summary
         run: | #sh
           {
-            echo "### Security Output"
+            echo "### Trivy report"
             echo "<details><summary>Click to expand</summary>"
             echo ""
-            echo '```json'
-            cat base_trivy.json
+            echo '```'
+            cat trivy-results.txt
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
 
-      - name: Push to Container registry
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-        id: push-to-ghcr
-        uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
-        with:
-          image: ${{ steps.build-image.outputs.image }}
-          tags: ${{ steps.metadata.outputs.tags }}
-          registry: ghcr.io/${{ github.repository }}
-
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-
-      - name: Sign container image
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-        run: |
-          cosign sign -y --key env://COSIGN_PRIVATE_KEY ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}@${TAGS}
-          IMAGE_FULL="ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}"
-          for tag in ${{ steps.metadata.outputs.tags }}; do
-            cosign sign -y --key env://COSIGN_PRIVATE_KEY $IMAGE_FULL:$tag
-          done
-        env:
-          TAGS: ${{ steps.push-to-ghcr.outputs.digest }}
-          COSIGN_EXPERIMENTAL: false
-          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
-
-  run-on-main:
+  push-image:
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    # only run on main branch or if PR has "push" label
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || contains(github.event.pull_request.labels.*.name, 'push')
     needs: build-bootc-image
     continue-on-error: false
-    timeout-minutes: 10
+    timeout-minutes: 20
     permissions:
       contents: read
-      packages: read
+      packages: write
       id-token: write
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+      attestations: write
     steps:
+      - name: Clone the repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
       - name: Log in to the Container registry
         uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
         with:
@@ -233,17 +231,44 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Enable podman pull
-        shell: bash
-        run: |
-          #podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
-
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
         with:
           cache: true
+
+      - name: Download PR image
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/image.tar
+          key: ${{ runner.os }}-pr-image-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - name: Download trivy report
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/trivy.json
+          key: ${{ runner.os }}-trivy-${{ github.sha }}
+          fail-on-cache-miss: true
+
+      - name: Load images
+        shell: bash
+        run: | #sh
+          set -euo pipefail
+          podman load -q -i ${{ github.workspace }}/image.tar
+          podman images
+          for tag in $TAGS; do
+            podman tag "${{ env.PR_IMAGE }}" "${{ env.IMAGE_FULL }}:$tag"
+          done
+        env:
+          TAGS: ${{ needs.build-bootc-image.outputs.tags }}
+
+      - name: Push to Container registry
+        id: push-to-ghcr
+        uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
+        with:
+          image: ${{ needs.build-bootc-image.outputs.image }}
+          tags: ${{ needs.build-bootc-image.outputs.tags }}
+          registry: ghcr.io/${{ github.repository }}
 
       - name: Trivy REPORT (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
@@ -270,7 +295,7 @@ jobs:
       - name: Trivy SBOM (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: ${{ env.BASE_IMAGE }}
+          input: image.tar
           scan-type: image
           format: "github"
           output: "dependency-results.sbom.json"
@@ -288,6 +313,50 @@ jobs:
           name: trivy-sbom-report
           path: "${{ github.workspace }}/dependency-results.sbom.json"
           retention-days: 20 # 90 is the default
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
+
+      - name: Compose immutable image ref (by digest)
+        id: ref
+        run: |
+          echo "IMAGE_REF=${{ env.IMAGE_FULL }}@${{ steps.push-to-ghcr.outputs.digest }}" >> $GITHUB_OUTPUT
+
+      - name: Sign container image
+        run: |
+          cosign sign --recursive -y --key env://COSIGN_PRIVATE_KEY ${{ steps.ref.outputs.IMAGE_REF }}
+          for tag in ${{ needs.build-bootc-image.outputs.tags }}; do
+            cosign sign --recursive -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}:$tag
+          done
+        env:
+          TAGS: ${{ steps.push-to-ghcr.outputs.digest }}
+          COSIGN_EXPERIMENTAL: false
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
+          COSIGN_PASSWORD: ""
+
+      - name: Attach build provenance attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: "${{ env.IMAGE_FULL }}"
+          subject-digest: ${{ steps.push-to-ghcr.outputs.digest }}
+          push-to-registry: true
+
+      - name: Cosign attest vulnerability results
+        run: |
+          # Attach the Trivy JSON as an attestation of type "vuln"
+          cosign attest \
+            --yes \
+            --type vuln \
+            --predicate trivy.json \
+            ${{ steps.ref.outputs.IMAGE_REF }}
+
+      - name: Verify
+        run: |
+          cosign verify --key ./cosign.pub \
+            ${{ env.IMAGE_FULL }}@${{ steps.push-to-ghcr.outputs.digest }}
+          cosign public-key --key env://COSIGN_PRIVATE_KEY
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
 
   run-on-pr:
     runs-on: ubuntu-latest
@@ -309,17 +378,16 @@ jobs:
       - name: Download PR image
         uses: actions/cache/restore@v4
         with:
-          path: ${{ github.workspace }}/pr-image.tar
+          path: ${{ github.workspace }}/image.tar
           key: ${{ runner.os }}-pr-image-${{ github.sha }}
           fail-on-cache-miss: true
 
-      - name: Download base_trivy.json
+      - name: Download trivy.json
         uses: actions/cache/restore@v4
         with:
-          path: ${{ github.workspace }}/base_trivy.json
-          key: ${{ runner.os }}-base_trivy-${{ github.sha }}
+          path: ${{ github.workspace }}/trivy.json
+          key: ${{ runner.os }}-trivy-${{ github.sha }}
           fail-on-cache-miss: true
-
 
       - name: Log in to the Container registry
         uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
@@ -328,20 +396,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Load latest image
+      - name: Load images
         shell: bash
         run: | #sh
-          podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
+          podman pull -q ${{ env.BASE_IMAGE }}
+          podman load -q -i ${{ github.workspace }}/image.tar
+          podman images
 
       - name: Inspect images (Podman)
         id: meta
         shell: bash
         run: | #sh
           set -euo pipefail
-          podman load -q -i ${{ github.workspace }}/pr-image.tar
-          podman images
 
           BASE_RAW=$(podman image inspect "${{ env.BASE_IMAGE }}" | jq '.[0]')
           PR_RAW=$(podman image inspect "${{ env.PR_IMAGE }}" | jq '.[0]')
@@ -370,32 +436,19 @@ jobs:
           echo "pr_layers=$PR_LAYERS" >> $GITHUB_OUTPUT
           echo "labels_changed=$LABELS_CHANGED" >> $GITHUB_OUTPUT
 
-      - name: Trivy (PR)
+      - name: Trivy (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: pr-image.tar
+          image-ref: ${{ env.BASE_IMAGE }}
           format: json
-          output: pr_trivy.json
+          output: base_trivy.json
           ignore-unfixed: true
           #severity: HIGH,CRITICAL
-          skip-setup-trivy: true
           scanners: "vuln"
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
-
-      - name: Publish Trivy Output to Summary
-        run: | #sh
-          {
-            echo "### Security Output"
-            echo "<details><summary>Click to expand</summary>"
-            echo ""
-            echo '```json'
-            cat pr_trivy.json
-            echo '```'
-            echo "</details>"
-          } >> $GITHUB_STEP_SUMMARY
-
+          
       - name: Build report
         id: report
         shell: bash
@@ -413,7 +466,7 @@ jobs:
           else trend="±0"; fi
 
           base_set=$(jq -r '[.Results[]?.Vulnerabilities[]? | .VulnerabilityID] | unique[]?' base_trivy.json | sort || true)
-          pr_set=$(jq -r   '[.Results[]?.Vulnerabilities[]? | .VulnerabilityID] | unique[]?' pr_trivy.json   | sort || true)
+          pr_set=$(jq -r   '[.Results[]?.Vulnerabilities[]? | .VulnerabilityID] | unique[]?' trivy.json   | sort || true)
           new=$(comm -13 <(printf "%s\n" "$base_set") <(printf "%s\n" "$pr_set") | sort || true)
           fix=$(comm -23 <(printf "%s\n" "$base_set") <(printf "%s\n" "$pr_set") | sort || true)
           new_n=$(printf "%s\n" "$new" | grep -c . || true)
@@ -445,7 +498,7 @@ jobs:
       - name: Trivy REPORT (PR)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: pr-image.tar
+          input: image.tar
           ignore-unfixed: true
           severity: HIGH,CRITICAL
           format: "sarif"
@@ -486,7 +539,7 @@ jobs:
       - name: Download PR image
         uses: actions/cache/restore@v4
         with:
-          path: ${{ github.workspace }}/pr-image.tar
+          path: ${{ github.workspace }}/image.tar
           key: ${{ runner.os }}-pr-image-${{ github.sha }}
           fail-on-cache-miss: true
 
@@ -500,13 +553,13 @@ jobs:
       - name: Load PR image
         shell: bash
         run: | #sh
-          sudo podman load -q -i ${{ github.workspace }}/pr-image.tar
+          sudo podman load -q -i ${{ github.workspace }}/image.tar
 
-      - name: Install deps (qemu, podman, jq)
+      - name: Install deps (socat sqlite3 qemu-system-x86 qemu-utils)
         run: |
           set -e
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends -qq socat qemu-system-x86 qemu-utils podman jq sqlite3
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends -qq socat sqlite3 qemu-system-x86 qemu-utils
 
       - name: Generate ephemeral SSH keypair
         id: ssh-key
@@ -530,7 +583,7 @@ jobs:
           } > out/config.toml
 
           cat ./out/config.toml
- 
+
       - name: Configure Podman
         shell: bash
         run: | #sh
@@ -666,7 +719,7 @@ jobs:
             -p 2222 \
             ${SSH_USERNAME}@localhost \
             "systemctl is-system-running --wait"
-          
+
       - name: Basic health checks
         env:
           CORE_SERVICES: "sshd NetworkManager"
@@ -742,5 +795,3 @@ jobs:
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
-
-
