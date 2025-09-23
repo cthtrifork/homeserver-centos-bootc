@@ -252,9 +252,12 @@ jobs:
       - name: Load images
         shell: bash
         run: | #sh
-          podman pull -q ${{ env.IMAGE_FULL }}:latest
-          IMAGE=$(podman load -q -i ${{ github.workspace }}/image.tar)
-          podman tag $IMAGE ${{ needs.build-bootc-image.outputs.tags }}
+          IMAGE_ID=$(podman load -q -i ${{ github.workspace }}/image.tar)
+          for t in $TAGS; do
+            podman tag "$IMAGE_ID" "$t"
+          done
+        env:
+          TAGS: ${{ needs.build-bootc-image.outputs.tags }}
 
       - name: Push to Container registry
         id: push-to-ghcr
