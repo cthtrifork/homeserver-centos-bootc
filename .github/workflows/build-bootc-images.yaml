@@ -256,8 +256,8 @@ jobs:
           IMAGE_ID=$(podman load -q -i ${{ github.workspace }}/image.tar)
           podman images
           echo "loaded ${IMAGE_ID}"
-          for t in $TAGS; do
-            podman tag "$IMAGE_ID" "ghcr.io/${{ github.repository }}/${{ needs.build-bootc-image.outputs.image }}:$t"
+          for tag in $TAGS; do
+            podman tag "$IMAGE_ID" "localhost/${{ needs.build-bootc-image.outputs.image }}:$tag"
           done
         env:
           TAGS: ${{ needs.build-bootc-image.outputs.tags }}
