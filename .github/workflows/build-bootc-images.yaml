@@ -167,7 +167,7 @@ jobs:
             creds=/tmp/creds
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          outputs: type=registry,oci-mediatypes=false # todo: add tar
+          #outputs: type=registry,oci-mediatypes=false # todo: add tar
 
       # Save PR image as tar so Trivy can scan without pushing
       - name: Save PR image as tar for Trivy
