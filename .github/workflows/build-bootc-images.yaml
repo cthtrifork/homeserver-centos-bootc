@@ -69,7 +69,7 @@ jobs:
       - name: Load image
         shell: bash
         run: |
-          podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
+          podman pull ${{ env.IMAGE_FULL }}:latest
           systemctl --user enable --now podman.socket # for trivy
           export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
 
@@ -177,6 +177,20 @@ jobs:
           key: ${{ runner.os }}-base_trivy-${{ github.sha }}
           path: "${{ github.workspace }}/base_trivy.json"
 
+      - name: Trivy REPORT table (base:latest)
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          image-ref: ${{ env.BASE_IMAGE }}
+          ignore-unfixed: true
+          #severity: HIGH,CRITICAL
+          format: table
+          output: trivy-results.md
+          skip-setup-trivy: true
+          scanners: "vuln"
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
+
       - name: Publish Trivy Output to Summary
         run: | #sh
           {
@@ -184,7 +198,7 @@ jobs:
             echo "<details><summary>Click to expand</summary>"
             echo ""
             echo '```json'
-            cat base_trivy.json
+            cat trivy-results.md
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
@@ -205,7 +219,7 @@ jobs:
       - name: Compose immutable image ref (by digest)
         id: ref
         run: |
-          echo "IMAGE_REF=ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}@${{ steps.push-to-ghcr.outputs.digest }}" >> $GITHUB_OUTPUT
+          echo "IMAGE_REF=${{ env.IMAGE_FULL }}@${{ steps.push-to-ghcr.outputs.digest }}" >> $GITHUB_OUTPUT
 
 
       - name: Sign container image
@@ -223,7 +237,7 @@ jobs:
       - name: Attach build provenance attestation
         uses: actions/attest-build-provenance@v1
         with:
-          subject-name: "ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}"
+          subject-name: "${{ env.IMAGE_FULL }}"
           subject-digest: ${{ steps.push-to-ghcr.outputs.digest }}
           push-to-registry: true
 
@@ -258,7 +272,7 @@ jobs:
       - name: Enable podman pull
         shell: bash
         run: |
-          #podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
+          #podman pull ${{ env.IMAGE_FULL }}:latest
           systemctl --user enable --now podman.socket # for trivy
           export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
 
@@ -342,18 +356,10 @@ jobs:
           key: ${{ runner.os }}-base_trivy-${{ github.sha }}
           fail-on-cache-miss: true
 
-
-      - name: Log in to the Container registry
-        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Load latest image
         shell: bash
         run: | #sh
-          podman pull ghcr.io/${{ github.repository }}/${{ env.IMAGE_NAME }}:latest
+          podman pull ${{ env.IMAGE_FULL }}:latest
           systemctl --user enable --now podman.socket # for trivy
           export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
 
@@ -406,6 +412,20 @@ jobs:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
 
+      - name: Trivy REPORT table (PR)
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
+        with:
+          input: pr-image.tar
+          ignore-unfixed: true
+          #severity: HIGH,CRITICAL
+          format: table
+          output: pr_trivy.md
+          skip-setup-trivy: true
+          scanners: "vuln"
+        env:
+          TRIVY_SKIP_DB_UPDATE: true
+          TRIVY_SKIP_JAVA_DB_UPDATE: true
+
       - name: Publish Trivy Output to Summary
         run: | #sh
           {
@@ -413,7 +433,7 @@ jobs:
             echo "<details><summary>Click to expand</summary>"
             echo ""
             echo '```json'
-            cat pr_trivy.json
+            cat pr_trivy.md
             echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
