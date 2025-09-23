@@ -50,7 +50,6 @@ jobs:
     outputs:
       image: ${{ steps.build-image.outputs.image }}
       tags: ${{ steps.build-image.outputs.tags }}
-      digest: ${{ steps.push-to-ghcr.outputs.digest }}
     permissions:
       contents: read
       packages: write
@@ -71,8 +70,6 @@ jobs:
         shell: bash
         run: |
           podman pull ${{ env.IMAGE_FULL }}:latest
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
 
       - name: Get current date
         id: date
@@ -89,7 +86,7 @@ jobs:
           # This generates all the tags for your image, you can add custom tags here too!
           # Default tags are "$DEFAULT_TAG" and "$DEFAULT_TAG.$date".
           tags: |
-            type=raw,value=${{ env.DEFAULT_TAG }}
+            type=raw,value=${{ env.DEFAULT_TAG }},enable={{is_default_branch}}
             type=raw,value=0.1.${{ github.run_number }}
             type=raw,value=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
             type=raw,value={{date 'YYYYMMDD'}}
@@ -204,18 +201,10 @@ jobs:
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
 
-      - name: Push to Container registry
-        if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-        id: push-to-ghcr
-        uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
-        with:
-          image: ${{ steps.build-image.outputs.image }}
-          tags: ${{ steps.metadata.outputs.tags }}
-          registry: ghcr.io/${{ github.repository }}
-
   run-on-main:
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    # only run on main branch or if PR has "push" label
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch || contains(github.event.pull_request.labels.*.name, 'push') )
     needs: build-bootc-image
     continue-on-error: false
     timeout-minutes: 10
@@ -235,17 +224,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Enable podman pull
-        shell: bash
-        run: |
-          #podman pull ${{ env.IMAGE_FULL }}:latest
-          systemctl --user enable --now podman.socket # for trivy
-          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
-
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
         with:
           cache: true
+
+      - name: Push to Container registry
+        id: push-to-ghcr
+        uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
+        with:
+          image: ${{ needs.build-bootc-image.outputs.image }}
+          tags: ${{ needs.build-bootc-image.outputs.tags }}
+          registry: ghcr.io/${{ github.repository }}
 
       - name: Trivy REPORT (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
@@ -297,7 +287,7 @@ jobs:
       - name: Compose immutable image ref (by digest)
         id: ref
         run: |
-          echo "IMAGE_REF=${{ env.IMAGE_FULL }}@${{ needs.build-bootc-image.outputs.digest }}" >> $GITHUB_OUTPUT
+          echo "IMAGE_REF=${{ env.IMAGE_FULL }}@${{ steps.push-to-ghcr.outputs.digest }}" >> $GITHUB_OUTPUT
 
       - name: Sign container image
         run: |
@@ -306,7 +296,7 @@ jobs:
             cosign sign --recursive -y --key env://COSIGN_PRIVATE_KEY ${{ env.IMAGE_FULL }}:$tag
           done
         env:
-          TAGS: ${{ needs.build-bootc-image.outputs.digest }}
+          TAGS: ${{ steps.push-to-ghcr.outputs.digest }}
           COSIGN_EXPERIMENTAL: false
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           COSIGN_PASSWORD: ""
@@ -315,7 +305,7 @@ jobs:
         uses: actions/attest-build-provenance@v1
         with:
           subject-name: "${{ env.IMAGE_FULL }}"
-          subject-digest: ${{ needs.build-bootc-image.outputs.digest }}
+          subject-digest: ${{ steps.push-to-ghcr.outputs.digest }}
           push-to-registry: true
 
       - name: Cosign attest vulnerability results
@@ -330,7 +320,7 @@ jobs:
       - name: Verify
         run: |
           cosign verify --key ./cosign.pub \
-            ${{ env.IMAGE_FULL }}@${{ needs.build-bootc-image.outputs.digest }}
+            ${{ env.IMAGE_FULL }}@${{ steps.push-to-ghcr.outputs.digest }}
           cosign public-key --key env://COSIGN_PRIVATE_KEY
         env:
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
