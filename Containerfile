@@ -28,7 +28,7 @@ RUN --mount=type=secret,id=creds,required=true \
     # For docker CLI (real Docker or the podman-docker shim): per-daemon fallback
     mkdir -p /etc/docker && \
     ln -sf /usr/lib/container-auth.json /etc/docker/config.json && \
-    printf "REGISTRY_AUTH_FILE=~/.config/containers/auth.json\n" | tee -a /etc/environment
+    printf "REGISTRY_AUTH_FILE=/home/$user/.config/containers/auth.json\n" | tee -a /etc/environment
 
 # Install common utilities
 #RUN dnf -y group install 'Development Tools' # this one is huge and includes java!
