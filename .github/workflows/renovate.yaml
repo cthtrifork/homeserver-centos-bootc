@@ -21,3 +21,4 @@ jobs:
           RENOVATE_PAT_TOKEN: '${{ secrets.PAT_RENOVATEBOT }}'
           RENOVATE_PLATFORM_COMMIT: 'true'
           RENOVATE_X_GITHUB_HOST_RULES: 'true'
+          LOG_LEVEL: debug
