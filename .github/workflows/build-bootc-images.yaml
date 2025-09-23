@@ -335,7 +335,7 @@ jobs:
           COSIGN_PASSWORD: ""
 
       - name: Attach build provenance attestation
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
         with:
           subject-name: "${{ env.IMAGE_FULL }}"
           subject-digest: ${{ steps.push-to-ghcr.outputs.digest }}
