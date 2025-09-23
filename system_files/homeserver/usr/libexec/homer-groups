@@ -19,8 +19,8 @@ for user in $wheelarray; do
     echo "Created home directory for $user"
   fi
 
-  chown $user: /home/$user
   install -o $user -g $user -m 0700 -d /home/$user/.docker
+  install -o $user -g $user -m 0700 -d /home/$user/.config
   install -o $user -g $user -m 0700 -d /home/$user/.config/containers
 
   #ln -sf /etc/containers/auth.json /home/$user/.config/containers/auth.json
