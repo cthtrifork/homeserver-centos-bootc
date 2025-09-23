@@ -156,7 +156,7 @@ jobs:
       - name: Trivy (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: ${{ env.BASE_IMAGE }}
+          input: pr-image.tar
           format: json
           output: base_trivy.json
           ignore-unfixed: true
@@ -176,7 +176,7 @@ jobs:
       - name: Trivy REPORT table (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          image-ref: ${{ env.BASE_IMAGE }}
+          input: pr-image.tar
           ignore-unfixed: true
           #severity: HIGH,CRITICAL
           format: table
