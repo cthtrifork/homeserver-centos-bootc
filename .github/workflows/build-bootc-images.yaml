@@ -148,7 +148,7 @@ jobs:
       - name: Save PR image as tar for Trivy
         run: podman save "${{ env.PR_IMAGE }}"  > pr-image.tar
 
-      - name: Upload PR image as a Github artifact
+      - name: Upload PR image
         uses: actions/cache/save@v4
         with:
           key: ${{ runner.os }}-pr-image-${{ github.sha }}
@@ -365,13 +365,25 @@ jobs:
           key: ${{ runner.os }}-base_trivy-${{ github.sha }}
           fail-on-cache-miss: true
 
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load images
+        shell: bash
+        run: | #sh
+          podman pull -q ${{ env.IMAGE_FULL }}:latest
+          podman load -q -i ${{ github.workspace }}/pr-image.tar
+          podman images
+
       - name: Inspect images (Podman)
         id: meta
         shell: bash
         run: | #sh
           set -euo pipefail
-          podman load -q -i ${{ github.workspace }}/pr-image.tar
-          podman images
 
           BASE_RAW=$(podman image inspect "${{ env.BASE_IMAGE }}" | jq '.[0]')
           PR_RAW=$(podman image inspect "${{ env.PR_IMAGE }}" | jq '.[0]')
