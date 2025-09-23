@@ -693,7 +693,7 @@ jobs:
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
-            'echo $REGISTRY_AUTH_FILE'
+            'ls /var/home/runner/.config -lha'
           ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
