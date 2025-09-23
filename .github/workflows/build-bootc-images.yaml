@@ -146,18 +146,18 @@ jobs:
 
       # Save PR image as tar so Trivy can scan without pushing
       - name: Save PR image as tar for Trivy
-        run: podman save "${{ env.PR_IMAGE }}"  > pr-image.tar
+        run: podman save "${{ env.PR_IMAGE }}"  > image.tar
 
       - name: Upload PR image
         uses: actions/cache/save@v4
         with:
           key: ${{ runner.os }}-pr-image-${{ github.sha }}
-          path: "${{ github.workspace }}/pr-image.tar"
+          path: "${{ github.workspace }}/image.tar"
 
       - name: Trivy (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: pr-image.tar
+          input: image.tar
           format: json
           output: base_trivy.json
           ignore-unfixed: true
@@ -177,7 +177,7 @@ jobs:
       - name: Trivy REPORT table (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: pr-image.tar
+          input: image.tar
           ignore-unfixed: true
           #severity: HIGH,CRITICAL
           format: table
@@ -229,7 +229,7 @@ jobs:
       - name: Download PR image
         uses: actions/cache/restore@v4
         with:
-          path: ${{ github.workspace }}/pr-image.tar
+          path: ${{ github.workspace }}/image.tar
           key: ${{ runner.os }}-pr-image-${{ github.sha }}
           fail-on-cache-miss: true
 
@@ -237,7 +237,7 @@ jobs:
         shell: bash
         run: | #sh
           podman pull -q ${{ env.IMAGE_FULL }}:latest
-          podman load -q -i ${{ github.workspace }}/pr-image.tar
+          podman load -q -i ${{ github.workspace }}/image.tar
 
       - name: Push to Container registry
         id: push-to-ghcr
@@ -354,7 +354,7 @@ jobs:
       - name: Download PR image
         uses: actions/cache/restore@v4
         with:
-          path: ${{ github.workspace }}/pr-image.tar
+          path: ${{ github.workspace }}/image.tar
           key: ${{ runner.os }}-pr-image-${{ github.sha }}
           fail-on-cache-miss: true
 
@@ -376,7 +376,7 @@ jobs:
         shell: bash
         run: | #sh
           podman pull -q ${{ env.IMAGE_FULL }}:latest
-          podman load -q -i ${{ github.workspace }}/pr-image.tar
+          podman load -q -i ${{ github.workspace }}/image.tar
           podman images
 
       - name: Inspect images (Podman)
@@ -415,7 +415,7 @@ jobs:
       - name: Trivy (PR)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: pr-image.tar
+          input: image.tar
           format: json
           output: pr_trivy.json
           ignore-unfixed: true
@@ -429,7 +429,7 @@ jobs:
       - name: Trivy REPORT table (PR)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: pr-image.tar
+          input: image.tar
           ignore-unfixed: true
           #severity: HIGH,CRITICAL
           format: table
@@ -499,7 +499,7 @@ jobs:
       - name: Trivy REPORT (PR)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: pr-image.tar
+          input: image.tar
           ignore-unfixed: true
           severity: HIGH,CRITICAL
           format: "sarif"
@@ -540,7 +540,7 @@ jobs:
       - name: Download PR image
         uses: actions/cache/restore@v4
         with:
-          path: ${{ github.workspace }}/pr-image.tar
+          path: ${{ github.workspace }}/image.tar
           key: ${{ runner.os }}-pr-image-${{ github.sha }}
           fail-on-cache-miss: true
 
@@ -554,7 +554,7 @@ jobs:
       - name: Load PR image
         shell: bash
         run: | #sh
-          sudo podman load -q -i ${{ github.workspace }}/pr-image.tar
+          sudo podman load -q -i ${{ github.workspace }}/image.tar
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
