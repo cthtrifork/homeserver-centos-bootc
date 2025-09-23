@@ -95,8 +95,8 @@ jobs:
             type=raw,value=${{ env.DEFAULT_TAG }},enable={{is_default_branch}}
             type=raw,value=${{ env.VERSION }}
             type=raw,enable={{is_default_branch}},value=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
-            type=raw,value={{date 'YYYYMMDD'}}
-            type=sha,format=long,enable=${{ github.event_name == 'pull_request' }}
+            type=raw,enable={{is_default_branch}},value={{date 'YYYYMMDD'}}
+            type=sha,enable=${{ github.event_name == 'pull_request' }},format=long
             type=ref,event=pr
           labels: |
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
@@ -213,7 +213,7 @@ jobs:
     if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || contains(github.event.pull_request.labels.*.name, 'push')
     needs: build-bootc-image
     continue-on-error: false
-    timeout-minutes: 10
+    timeout-minutes: 20
     permissions:
       contents: read
       packages: write
