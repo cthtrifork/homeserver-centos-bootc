@@ -194,9 +194,7 @@ jobs:
             echo "### Security Output"
             echo "<details><summary>Click to expand</summary>"
             echo ""
-            echo '```json'
             cat trivy-results.md
-            echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
 
@@ -440,9 +438,7 @@ jobs:
             echo "### Security Output"
             echo "<details><summary>Click to expand</summary>"
             echo ""
-            echo '```json'
             cat pr_trivy.md
-            echo '```'
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
 
