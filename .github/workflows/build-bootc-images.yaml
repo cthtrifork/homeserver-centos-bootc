@@ -233,10 +233,11 @@ jobs:
           key: ${{ runner.os }}-pr-image-${{ github.sha }}
           fail-on-cache-miss: true
 
-      - name: Load latest image
+      - name: Load images
         shell: bash
         run: | #sh
-          podman pull ${{ env.IMAGE_FULL }}:latest
+          podman pull -q ${{ env.IMAGE_FULL }}:latest
+          podman load -q -i ${{ github.workspace }}/pr-image.tar
 
       - name: Push to Container registry
         id: push-to-ghcr
