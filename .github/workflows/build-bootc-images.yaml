@@ -37,7 +37,7 @@ env:
   IMAGE_NAME: homeserver-centos-bootc
   IMAGE_FULL: ghcr.io/${{ github.repository }}/homeserver-centos-bootc
   BASE_IMAGE: ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest
-  PR_IMAGE: localhost/homeserver-centos-bootc:${{ github.sha }} # this should work when the image has been built
+  PR_IMAGE: localhost/homeserver-centos-bootc:0.1.${{ github.run_number }} # this should work when the image has been built
   CONTEXT: ./
 
 jobs:
@@ -91,7 +91,7 @@ jobs:
             type=raw,value=${{ env.VERSION }}
             type=raw,value=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
             type=raw,value={{date 'YYYYMMDD'}}
-            type=sha,enable=${{ github.event_name == 'pull_request' }}
+            type=sha,format=long,enable=${{ github.event_name == 'pull_request' }}
             type=ref,event=pr
           labels: |
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
