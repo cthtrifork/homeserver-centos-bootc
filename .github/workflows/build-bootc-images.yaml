@@ -502,11 +502,14 @@ jobs:
         run: | #sh
           sudo podman load -q -i ${{ github.workspace }}/pr-image.tar
 
-      - name: Install deps (qemu, podman, jq)
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Install deps (socat, sqlite3)
         run: |
           set -e
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends -qq socat qemu-system-x86 qemu-utils podman jq sqlite3
+          sudo apt-get install -y --no-install-recommends -qq socat sqlite3
 
       - name: Generate ephemeral SSH keypair
         id: ssh-key
