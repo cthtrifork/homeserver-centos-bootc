@@ -1,0 +1,23 @@
+name: Renovate
+permissions:
+  contents: read
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */2 * * *" # workflows runs every 2 hours
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Self-hosted Renovate
+        uses: renovatebot/github-action@9ba84f1ade243f8c2ce5b223df61cf23dc094584 # v43.0.13
+        with:
+          token: ${{ secrets.PAT_RENOVATEBOT }}
+          configurationFile: .github/workflows/renovate-config.js
+        env:
+          RENOVATE_PAT_TOKEN: '${{ secrets.PAT_RENOVATEBOT }}'
+          RENOVATE_PLATFORM_COMMIT: 'true'
+          RENOVATE_X_GITHUB_HOST_RULES: 'true'
