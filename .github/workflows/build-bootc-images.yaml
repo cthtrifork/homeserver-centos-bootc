@@ -256,7 +256,7 @@ jobs:
           podman load -q -i ${{ github.workspace }}/image.tar
           podman images
           for tag in $TAGS; do
-            podman tag "${{ env.PR_IMAGE }}" "localhost/${{ env.IMAGE_NAME }}:$tag"
+            podman tag "${{ env.PR_IMAGE }}" "${{ env.IMAGE_FULL }}:$tag"
           done
         env:
           TAGS: ${{ needs.build-bootc-image.outputs.tags }}
