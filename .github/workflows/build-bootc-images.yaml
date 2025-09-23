@@ -252,6 +252,7 @@ jobs:
       - name: Load images
         shell: bash
         run: | #sh
+          set -euo pipefail
           IMAGE_ID=$(podman load -q -i ${{ github.workspace }}/image.tar)
           for t in $TAGS; do
             podman tag "$IMAGE_ID" "${{ needs.build-bootc-image.outputs.image }}:$t"
