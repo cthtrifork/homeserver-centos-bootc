@@ -69,6 +69,8 @@ jobs:
       - name: Load image
         shell: bash
         run: |
+          systemctl --user enable --now podman.socket # for trivy
+          export DOCKER_HOST='unix:///${HOME}/.local/share/containers/podman/machine/podman.sock'
           podman pull ${{ env.IMAGE_FULL }}:latest
 
       - name: Get current date
@@ -369,8 +371,6 @@ jobs:
           path: ${{ github.workspace }}/base_trivy.json
           key: ${{ runner.os }}-base_trivy-${{ github.sha }}
           fail-on-cache-miss: true
-
-
 
       - name: Inspect images (Podman)
         id: meta
