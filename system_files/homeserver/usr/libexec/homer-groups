@@ -9,11 +9,10 @@ touch "$GROUP_SETUP_VER_FILE"
 GROUP_SETUP_VER_RAN=$(cat "$GROUP_SETUP_VER_FILE")
 
 # Setup Groups
-wheelarray=($(getent group wheel | cut -d ":" -f 4 | tr  ',' '\n'))
+wheelarray=($(getent group wheel | cut -d ":" -f 4 | tr ',' '\n'))
 
 # Setup home directory for each user in wheel group
-for user in $wheelarray
-do
+for user in $wheelarray; do
   echo "Setting up home for user: $user"
   if [[ ! -d /home/$user ]]; then
     chown -R $user: /home/$user
@@ -25,8 +24,9 @@ do
 
   #ln -sf /etc/containers/auth.json /home/$user/.config/containers/auth.json
   #ln -sf /usr/lib/container-auth.json /home/$user/.docker/config.json
-  rsync --chown=$user:$user /etc/containers/auth.json /home/$user/.config/containers/auth.json # for podman
-  rsync --chown=$user:$user /usr/lib/container-auth.json /home/$user/.docker/config.json # for docker CLI
+
+  install -o runner -g runner -m 0600 /etc/containers/auth.json /home/$user/.config/containers/auth.json # for podman
+  install -o runner -g runner -m 0600 /usr/lib/container-auth.json /home/$user/.docker/config.json       # for docker CLI
   runuser -u "$user" -- /usr/libexec/setup-home.sh "$user"
 done
 
@@ -36,14 +36,11 @@ if [[ -f $GROUP_SETUP_VER_FILE && "$GROUP_SETUP_VER" = "$GROUP_SETUP_VER_RAN" ]]
   exit 0
 fi
 
-
-for user in $wheelarray
-do
+for user in $wheelarray; do
   usermod -aG docker $user
   # todo: add more groups here
 done
 
 # Prevent future executions
 echo "Writing state file"
-echo "$GROUP_SETUP_VER" > "$GROUP_SETUP_VER_FILE"
-
+echo "$GROUP_SETUP_VER" >"$GROUP_SETUP_VER_FILE"
