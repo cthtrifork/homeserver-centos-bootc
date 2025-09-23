@@ -161,13 +161,13 @@ jobs:
             REGISTRY_USERNAME=${{ github.repository_owner }}
             REGISTRY_URL=ghcr.io
             PINGGY_HOST=${{ vars.PINGGY_HOST }}
-          secrets: |
-            id=registry_token,src=/tmp/REGISTRY_TOKEN
-            id=pinggy_token,src=/tmp/PINGGY_TOKEN
-            id=creds,src=/tmp/creds
+          secret-files: |
+            registry_token=/tmp/REGISTRY_TOKEN
+            pinggy_token=/tmp/PINGGY_TOKEN
+            creds=/tmp/creds
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          outputs: type=registry,oci-mediatypes=false
+          outputs: type=registry,oci-mediatypes=false # todo: add tar
 
       # Save PR image as tar so Trivy can scan without pushing
       - name: Save PR image as tar for Trivy
