@@ -253,8 +253,9 @@ jobs:
         shell: bash
         run: | #sh
           set -euo pipefail
-          IMAGE_ID=$(podman load -q -i ${{ github.workspace }}/image.tar)
+          podman load -q -i ${{ github.workspace }}/image.tar
           podman images
+          IMAGE_ID=$(podman images --format "{{.ID}}" | head -n1) # todo: find a better way
           echo "loaded ${IMAGE_ID}"
           for tag in $TAGS; do
             podman tag "$IMAGE_ID" "localhost/${{ env.IMAGE_NAME }}:$tag"
