@@ -331,7 +331,9 @@ jobs:
         run: |
           cosign verify --key ./cosign.pub \
             ${{ env.IMAGE_FULL }}@${{ needs.build-bootc-image.outputs.digest }}
-
+          cosign public-key --key env://COSIGN_PRIVATE_KEY
+        env:
+          COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
   run-on-pr:
     runs-on: ubuntu-latest
     needs: build-bootc-image
