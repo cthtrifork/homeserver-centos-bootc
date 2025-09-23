@@ -165,7 +165,7 @@ jobs:
           ignore-unfixed: true
           #severity: HIGH,CRITICAL
           format: table
-          output: trivy-results.md
+          output: trivy-results.txt
           skip-setup-trivy: true
           scanners: "vuln"
         env:
@@ -177,7 +177,7 @@ jobs:
         with:
           input: image.tar
           format: json
-          output: trivy.txt
+          output: trivy.json
           ignore-unfixed: true
           #severity: HIGH,CRITICAL
           skip-setup-trivy: true
