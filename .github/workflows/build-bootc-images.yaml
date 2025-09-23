@@ -357,11 +357,6 @@ jobs:
           key: ${{ runner.os }}-pr-image-${{ github.sha }}
           fail-on-cache-miss: true
 
-      - name: Load latest image
-        shell: bash
-        run: | #sh
-          podman pull ${{ env.IMAGE_FULL }}:latest
-
       - name: Download base_trivy.json
         uses: actions/cache/restore@v4
         with:
