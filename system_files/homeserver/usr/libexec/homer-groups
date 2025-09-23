@@ -25,8 +25,8 @@ for user in $wheelarray; do
   #ln -sf /etc/containers/auth.json /home/$user/.config/containers/auth.json
   #ln -sf /usr/lib/container-auth.json /home/$user/.docker/config.json
 
-  install -o runner -g runner -m 0600 /etc/containers/auth.json /home/$user/.config/containers/auth.json # for podman
-  install -o runner -g runner -m 0600 /usr/lib/container-auth.json /home/$user/.docker/config.json       # for docker CLI
+  install -o $user -g $user -m 0600 /etc/containers/auth.json /home/$user/.config/containers/auth.json # for podman
+  install -o $user -g $user -m 0600 /usr/lib/container-auth.json /home/$user/.docker/config.json       # for docker CLI
   runuser -u "$user" -- /usr/libexec/setup-home.sh "$user"
 done
 
