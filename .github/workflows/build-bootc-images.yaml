@@ -579,7 +579,7 @@ jobs:
           {
             echo '[[customizations.filesystem]]'
             echo 'mountpoint = "/"'
-            echo 'minsize   = "8 GiB"'
+            echo 'minsize   = "12 GiB"'
             echo '[[customizations.user]]'
             echo "name = \"${{ env.SSH_USERNAME }}\""
             echo 'password = ""'
@@ -666,7 +666,7 @@ jobs:
             -name bootc-vm \
             -enable-kvm \
             -cpu host \
-            -m 2G \
+            -m 4G \
             -drive if=virtio,file="${DISK}",format=qcow2 \
             -net nic,model=virtio \
             -net user,hostfwd=tcp::2222-:22 \
