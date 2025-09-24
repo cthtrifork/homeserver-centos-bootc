@@ -329,7 +329,7 @@ jobs:
           done
         env:
           TAGS: ${{ steps.push-to-ghcr.outputs.digest }}
-          COSIGN_EXPERIMENTAL: false
+          COSIGN_EXPERIMENTAL: true
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
           COSIGN_PASSWORD: ""
 
