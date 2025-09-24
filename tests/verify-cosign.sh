@@ -11,8 +11,6 @@ skopeo copy --policy /tmp/policy-permissive.json docker://${IMAGE_FULL}:latest d
 
 #DIGEST=$(skopeo inspect --raw docker://${IMAGE_FULL}:latest | jq -r '.manifests?[0].digest // .digest')
 DIGEST=$(skopeo inspect --format "{{.Digest}}" docker://${IMAGE_FULL}:latest)
-MEDIA_TYPE=$(skopeo inspect --format '{{.MediaType}}' docker://${IMAGE_FULL}:latest)
-echo "latest -> $DIGEST ($MEDIA_TYPE)"
 
 echo "Manually verifying image signature for image: ${IMAGE_FULL}@${DIGEST}"
 cosign verify --key /etc/pki/cosign/cosign.pub ${IMAGE_FULL}@${DIGEST}
