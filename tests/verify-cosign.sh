@@ -19,4 +19,5 @@ podman image trust show --raw | jq
 echo "Image signature verified manually. Pulling image: ${IMAGE_FULL}:latest"
 podman pull --signature-policy /tmp/policy-permissive.json ${IMAGE_FULL}@${DIGEST} || true
 podman pull ${IMAGE_FULL}@${DIGEST} || true
+podman pull --log-level=debug ${IMAGE_FULL}:latest 2>&1 | grep -iE 'digest|signature|sigstore' || true
 podman pull ${IMAGE_FULL}:latest || true
