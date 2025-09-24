@@ -745,7 +745,9 @@ jobs:
           cat ./tests/verify-cosign.sh | ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
-            ${SSH_USERNAME}@localhost
+            "$SSH_USERNAME"@localhost \
+              IMAGE_FULL="$IMAGE_FULL" \
+              bash -s --
 
       # - name: /etc drift detector (fail on unexpected drift)
       #   env:
