@@ -189,7 +189,6 @@ jobs:
           TRIVY_SKIP_JAVA_DB_UPDATE: true
 
       - name: Upload trivy json report as a Github artifact
-        if: ${{ github.event_name == 'pull_request' }}
         uses: actions/cache/save@v4
         with:
           key: ${{ runner.os }}-trivy-${{ github.sha }}
