@@ -579,7 +579,7 @@ jobs:
           {
             echo '[[customizations.filesystem]]'
             echo 'mountpoint = "/tmp"'
-            echo 'minsize   = "4 GiB"'
+            echo 'minsize   = "8 GiB"'
             echo '[[customizations.filesystem]]'
             echo 'mountpoint = "/"'
             echo 'minsize   = "8   GiB"'
