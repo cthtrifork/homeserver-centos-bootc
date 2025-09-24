@@ -549,6 +549,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      #- name: Maximize build space
+      #  uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
+
       - name: Load PR image
         shell: bash
         run: | #sh
@@ -571,9 +574,12 @@ jobs:
           echo "ssh_key=./out/ci_ssh_key" >> $GITHUB_OUTPUT
 
       - name: Write bootc-image-builder user config (SSH access)
-        run: |
+        run: | #sh
           set -e
           {
+            echo '[[customizations.filesystem]]'
+            echo 'mountpoint = "/"'
+            echo 'minsize   = "12 GiB"'
             echo '[[customizations.user]]'
             echo "name = \"${{ env.SSH_USERNAME }}\""
             echo 'password = ""'
@@ -660,7 +666,7 @@ jobs:
             -name bootc-vm \
             -enable-kvm \
             -cpu host \
-            -m 2G \
+            -m 4G \
             -drive if=virtio,file="${DISK}",format=qcow2 \
             -net nic,model=virtio \
             -net user,hostfwd=tcp::2222-:22 \
@@ -719,6 +725,13 @@ jobs:
             ${SSH_USERNAME}@localhost \
             "systemctl is-system-running --wait"
 
+          echo "--- stats ---"
+          ssh "${SSH_OPTS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+            "df -h"
+
       - name: Basic health checks
         env:
           CORE_SERVICES: "sshd NetworkManager"
@@ -732,6 +745,22 @@ jobs:
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost
+
+      - name: Verify ghcr auth
+        env:
+          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+          IMAGE_FULL: ${{ env.IMAGE_FULL }}
+        run: | #sh
+          # turn the env string into a Bash array
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+          cat ./tests/verify-cosign.sh | ssh "${SSH_OPTS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            "$SSH_USERNAME"@localhost \
+              IMAGE_FULL="$IMAGE_FULL" \
+              bash -s --
 
       # - name: /etc drift detector (fail on unexpected drift)
       #   env:

@@ -1,0 +1,47 @@
+{
+    "default": [
+        {
+            "type": "insecureAcceptAnything"
+        }
+    ],
+    "transports": {
+        "docker": {
+            "ghcr.io/cthtrifork": [
+                {
+                    "type": "sigstoreSigned",
+                    "keyPath": "/etc/pki/cosign/cosign.pub",
+                    "signedIdentity": {
+                        "type": "matchRepository"
+                    }
+                }
+            ],
+            "registry.access.redhat.com": [
+                {
+                    "type": "signedBy",
+                    "keyType": "GPGKeys",
+                    "keyPaths": [
+                        "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+                        "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta"
+                    ]
+                }
+            ],
+            "registry.redhat.io": [
+                {
+                    "type": "signedBy",
+                    "keyType": "GPGKeys",
+                    "keyPaths": [
+                        "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release",
+                        "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta"
+                    ]
+                }
+            ]
+        },
+        "docker-daemon": {
+            "": [
+                {
+                    "type": "insecureAcceptAnything"
+                }
+            ]
+        }
+    }
+}
