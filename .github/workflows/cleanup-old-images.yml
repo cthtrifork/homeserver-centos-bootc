@@ -18,7 +18,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           older-than: 90 days
           delete-orphaned-images: true
-          # packages: bos
-          # keep-n-tagged: 7
-          # keep-n-untagged: 7
+          owner: ${{ github.repository_owner }}
+          repository: ${{ github.event.repository.name }}
+          package: homeserver-centos-bootc
+          keep-n-tagged: 7
+          keep-n-untagged: 7
           # dry-run: true
