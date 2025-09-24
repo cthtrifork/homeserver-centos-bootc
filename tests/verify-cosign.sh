@@ -6,7 +6,7 @@ cat > /tmp/policy-permissive.json <<'EOF'
 EOF
 
 echo "Pulling image: ${IMAGE_FULL}:latest without signature verification"
-skopeo copy --policy /tmp/policy-permissive.json docker://${IMAGE_FULL}:latest dir:$(mktemp -d /tmp/tmp-image.XXXXXX)
+skopeo copy --policy /tmp/policy-permissive.json docker://${IMAGE_FULL}:latest dir:$(mktemp -d ${HOME}/tmp/tmp-image.XXXXXX)
 #podman pull --policy ${IMAGE_FULL}:latest
 
 #DIGEST=$(skopeo inspect --raw docker://${IMAGE_FULL}:latest | jq -r '.manifests?[0].digest // .digest')

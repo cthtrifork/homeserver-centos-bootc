@@ -578,11 +578,8 @@ jobs:
           set -e
           {
             echo '[[customizations.filesystem]]'
-            echo 'mountpoint = "/tmp"'
-            echo 'minsize   = "8 GiB"'
-            echo '[[customizations.filesystem]]'
             echo 'mountpoint = "/"'
-            echo 'minsize   = "8   GiB"'
+            echo 'minsize   = "8 GiB"'
             echo '[[customizations.user]]'
             echo "name = \"${{ env.SSH_USERNAME }}\""
             echo 'password = ""'
