@@ -6,7 +6,7 @@ cat > /tmp/policy-permissive.json <<'EOF'
 EOF
 
 echo "Pulling image: ${IMAGE_FULL}:latest without signature verification"
-podman --signature-policy /tmp/policy-permissive.json pull ${IMAGE_FULL}:latest
+skopeo --policy /tmp/policy-permissive.json pull ${IMAGE_FULL}:latest
 
 #DIGEST=$(skopeo inspect --raw docker://${IMAGE_FULL}:latest | jq -r '.manifests?[0].digest // .digest')
 DIGEST=$(skopeo inspect --format "{{.Digest}}" docker://${IMAGE_FULL}:latest)
