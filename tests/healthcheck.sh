@@ -12,3 +12,4 @@ for s in $CORE_SERVICES; do
     exit 1
     }
 done
+echo "all ok"
