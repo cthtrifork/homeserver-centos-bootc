@@ -719,6 +719,13 @@ jobs:
             ${SSH_USERNAME}@localhost \
             "systemctl is-system-running --wait"
 
+          echo "--- stats ---"
+          ssh "${SSH_OPTS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost \
+            "df -h"
+
       - name: Basic health checks
         env:
           CORE_SERVICES: "sshd NetworkManager"
