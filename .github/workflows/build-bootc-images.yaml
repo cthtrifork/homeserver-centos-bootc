@@ -9,6 +9,7 @@ on:
       - main
     paths:
       - "Containerfile"
+      - "*.containerfile"
       - "config.toml"
       - "system_files/homeserver/**"
       - "build_files/**"
@@ -18,6 +19,7 @@ on:
       - main
     paths:
       - "Containerfile"
+      - "*.containerfile"
       - "config.toml"
       - "system_files/homeserver/**"
       - "build_files/**"
@@ -29,34 +31,79 @@ concurrency:
 
 env:
   IMAGE_DESC: "${{ github.event.repository.description }}"
-  #IMAGE_LOGO_URL: "https://raw.githubusercontent.com/astrovm/amyos/main/repo_files/amy-logo-white.png" # Put your own image here for a fancy profile on https://artifacthub.io/!
   REPO_NAME: "${{ github.event.repository.name }}" # output image name, usually same as repo name
-  #IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}" # do not edit
   DEFAULT_TAG: "latest"
   VERSION: "0.1.${{ github.run_number }}"
-  IMAGE_NAME: homeserver-centos-bootc
-  IMAGE_FULL: ghcr.io/${{ github.repository }}/homeserver-centos-bootc
-  BASE_IMAGE: ghcr.io/${{ github.repository }}/homeserver-centos-bootc:latest
-  PR_IMAGE: localhost/homeserver-centos-bootc:0.1.${{ github.run_number }} # this should work when the image has been built
   CONTEXT: ./
 
 jobs:
+  changes:
+    name: Detect changed areas
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      contents: read
+    outputs:
+      # Expose matched filters as job 'packages' output variable
+      image: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1) Map file changes to logical components
+      - name: Filter paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          token: ${{ github.token }}
+          filters: |
+            homeserver:
+              - 'system_files/homeserver/**'
+              - 'Containerfile'
+            jumphost:
+              - 'system_files/jumphost/**'
+              - 'jumphost.containerfile'
+            githubrunner:
+              - 'system_files/githubrunner/**'
+              - 'github-runner.containerfile'
+
+
   build-bootc-image:
-    name: Build image
+    name: Build image ${{ matrix.image }}
+    needs: changes
     runs-on: ubuntu-latest
     continue-on-error: false
     environment: ${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.changes.outputs.image) }}
     outputs:
       image: ${{ steps.build-image.outputs.image }}
       tags: ${{ steps.build-image.outputs.tags }}
+      image-name: ${{ steps.set-env.outputs.IMAGE_NAME }}
     permissions:
       contents: read
       packages: read
       id-token: write
 
     steps:
+      - name: Set environment variables
+        id: set-env
+        shell: bash
+        run: |
+          if [[ "${{ matrix.image }}" == "homeserver" ]]; then
+            echo "IMAGE_NAME=homeserver-centos-bootc" >> $GITHUB_ENV
+          elif [[ "${{ matrix.image }}" == "jumphost" ]]; then
+            echo "IMAGE_NAME=jumphost" >> $GITHUB_ENV
+          elif [[ "${{ matrix.image }}" == "githubrunner" ]]; then
+            echo "IMAGE_NAME=github-runner-centos-bootc" >> $GITHUB_ENV
+          fi
+          echo "IMAGE_FULL=ghcr.io/${{ github.repository }}/${IMAGE_NAME}" >> $GITHUB_ENV
+          echo "BASE_IMAGE=ghcr.io/${{ github.repository }}/${IMAGE_NAME}:latest" >> $GITHUB_ENV
+          echo "PR_IMAGE=localhost/${IMAGE_NAME}:${{ env.VERSION }}" >> $GITHUB_ENV
+
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
         with:
