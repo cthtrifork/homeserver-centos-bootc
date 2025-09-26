@@ -251,6 +251,10 @@ jobs:
     needs: build-bootc-image
     continue-on-error: false
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.changes.outputs.image) }}
     permissions:
       contents: read
       packages: write
@@ -406,6 +410,10 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     continue-on-error: false
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.changes.outputs.image) }}
     permissions:
       contents: read
       packages: read
@@ -573,6 +581,10 @@ jobs:
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'e2e') }}
     continue-on-error: false
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.changes.outputs.image) }}
     permissions:
       contents: read
       packages: read
