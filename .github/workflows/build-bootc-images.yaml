@@ -460,7 +460,7 @@ jobs:
       - name: Load images
         shell: bash
         run: | #sh
-          podman pull -q ${{ env.BASE_IMAGE }}
+          podman pull -q ${{ env.BASE_IMAGE }} || true
           podman load -q -i ${{ github.workspace }}/image.tar
           podman images
 
