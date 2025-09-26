@@ -100,7 +100,7 @@ jobs:
           elif [[ "${{ matrix.image }}" == "githubrunner" ]]; then
             IMAGE_NAME=github-runner-centos-bootc
           fi
-          echo "IMAGE_NAME=$IMAGE_NAME" >> $GITHUB_ENV
+          echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
           echo "IMAGE_FULL=ghcr.io/${{ github.repository }}/${IMAGE_NAME}" >> $GITHUB_ENV
           echo "BASE_IMAGE=ghcr.io/${{ github.repository }}/${IMAGE_NAME}:latest" >> $GITHUB_ENV
           echo "PR_IMAGE=localhost/${IMAGE_NAME}:${{ env.VERSION }}" >> $GITHUB_ENV
@@ -123,7 +123,8 @@ jobs:
       - name: Load image
         shell: bash
         run: |
-          podman pull -q ${{ env.BASE_IMAGE }}
+          podman pull -q ${{ env.BASE_IMAGE }} || true
+          podman images
 
       - name: Get current date
         id: date
