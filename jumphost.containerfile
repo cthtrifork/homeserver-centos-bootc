@@ -32,9 +32,9 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 
 # Activate services
 RUN mkdir -p /etc/containers/systemd && \
-    ln -sr /usr/share/containers/systemd/demo-backend.service /etc/containers/systemd/demo-backend.service && \
-    ln -sr /usr/share/containers/systemd/hosted-terminal.service /etc/containers/systemd/hosted-terminal.service && \
-    ln -sr /usr/share/containers/systemd/reverse-proxy.service /etc/containers/systemd/reverse-proxy.service && \
+    ln -sr /usr/share/containers/systemd/demo-backend.container /etc/containers/systemd/demo-backend.container && \
+    ln -sr /usr/share/containers/systemd/hosted-terminal.container /etc/containers/systemd/hosted-terminal.container && \
+    ln -sr /usr/share/containers/systemd/reverse-proxy.container /etc/containers/systemd/reverse-proxy.container && \
     systemctl enable qemu-guest-agent && \
     systemctl enable podman.socket && \
     systemctl enable demo-backend.service && \
