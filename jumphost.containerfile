@@ -31,15 +31,8 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     /ctx/build_files/cleanup.sh 
 
 # Activate services
-RUN mkdir -p /etc/containers/systemd && \
-    ln -sr /usr/share/containers/systemd/demo-backend.container /etc/containers/systemd/demo-backend.container && \
-    ln -sr /usr/share/containers/systemd/hosted-terminal.container /etc/containers/systemd/hosted-terminal.container && \
-    ln -sr /usr/share/containers/systemd/reverse-proxy.container /etc/containers/systemd/reverse-proxy.container && \
-    systemctl enable qemu-guest-agent && \
+RUN systemctl enable qemu-guest-agent && \
     systemctl enable podman.socket && \
-    systemctl enable demo-backend.service && \
-    systemctl enable hosted-terminal.service && \
-    systemctl enable reverse-proxy.service && \
     systemctl enable podman-auto-update.timer
     
 RUN bootc container lint
