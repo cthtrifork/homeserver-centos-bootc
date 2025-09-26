@@ -89,6 +89,9 @@ jobs:
       id-token: write
 
     steps:
+      - name: Clone the repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
         with:
@@ -98,9 +101,6 @@ jobs:
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
         with:
           cache: true
-
-      - name: Clone the repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Log in to the Container registry
         uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
@@ -258,12 +258,13 @@ jobs:
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
       attestations: write
     steps:
+      - name: Clone the repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
         with:
           image: ${{ matrix.image }}
-      - name: Clone the repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Log in to the Container registry
         uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
@@ -578,12 +579,13 @@ jobs:
       SSH_USERNAME: runner
       SSH_OPTIONS: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5"
     steps:
+      - name: Clone the repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
+
       - name: Set image vars
         uses: ./.github/actions/set-image-vars
         with:
           image: ${{ matrix.image }}
-      - name: Clone the repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
       - name: Download PR image
         uses: actions/cache/restore@v4
