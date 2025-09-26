@@ -17,9 +17,7 @@ RUN --mount=type=secret,id=creds,required=true cp /run/secrets/creds /usr/lib/co
 
 # Configure repositories
 RUN dnf -y install 'dnf-command(config-manager)'
-RUN dnf -y install dnf-plugins-core procps-ng file qemu-guest-agent \
-    # Dev tools
-    git rsync unzip jq tree curl
+RUN dnf -y install dnf-plugins-core procps-ng file qemu-guest-agent
 
 # Install service
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -31,7 +29,11 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     /ctx/build_files/cleanup.sh 
 
 # Activate services
-RUN systemctl enable qemu-guest-agent && \
+RUN mkdir -p /etc/containers/systemd && \
+    ln -sr /usr/share/containers/systemd/demo-backend.service /etc/containers/systemd/demo-backend.service && \
+    ln -sr /usr/share/containers/systemd/hosted-terminal.service /etc/containers/systemd/hosted-terminal.service && \
+    ln -sr /usr/share/containers/systemd/reverse-proxy.service /etc/containers/systemd/reverse-proxy.service && \
+    systemctl enable qemu-guest-agent && \
     systemctl enable podman.socket && \
     systemctl enable demo-backend.service && \
     systemctl enable hosted-terminal.service && \
