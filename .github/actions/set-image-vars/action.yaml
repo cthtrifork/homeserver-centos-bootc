@@ -1,0 +1,40 @@
+name: "Set BootC image vars"
+description: "Resolve IMAGE_NAME and related variables based on image type"
+inputs:
+  image:
+    description: "Image selector (homeserver|jumphost|githubrunner)"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Set environment variables
+      id: set-env
+      shell: bash
+      run: | #sh
+        set -euo pipefail
+
+        case "${{ inputs.image }}" in
+          homeserver)
+            IMAGE_NAME="homeserver-centos-bootc"
+            CONTAINERFILE="Containerfile"
+            ;;
+          jumphost)
+            IMAGE_NAME="jumphost-centos-bootc"
+            CONTAINERFILE="jumphost.containerfile"
+            ;;
+          githubrunner)
+            IMAGE_NAME="github-runner-centos-bootc"
+            CONTAINERFILE="github-runner.containerfile"
+            ;;
+          *)
+            echo "Unsupported image type: '${{ inputs.image }}'." >&2
+            echo "Expected one of: homeserver, jumphost, githubrunner." >&2
+            exit 1
+            ;;
+        esac
+
+        echo "IMAGE_NAME=${IMAGE_NAME}" >> "$GITHUB_ENV"
+        echo "IMAGE_FULL=ghcr.io/${{ github.repository }}/${IMAGE_NAME}" >> "$GITHUB_ENV"
+        echo "BASE_IMAGE=ghcr.io/${{ github.repository }}/${IMAGE_NAME}:latest" >> "$GITHUB_ENV"
+        echo "PR_IMAGE=localhost/${IMAGE_NAME}:${{ env.VERSION }}" >> "$GITHUB_ENV"
+        echo "CONTAINERFILE=${CONTAINERFILE}" >> "$GITHUB_ENV"
