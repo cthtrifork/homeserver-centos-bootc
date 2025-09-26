@@ -95,15 +95,19 @@ jobs:
         run: |
           if [[ "${{ matrix.image }}" == "homeserver" ]]; then
             IMAGE_NAME=homeserver-centos-bootc
+            CONTAINERFILE=Containerfile
           elif [[ "${{ matrix.image }}" == "jumphost" ]]; then
             IMAGE_NAME=jumphost-centos-bootc
+            CONTAINERFILE=jumphost.containerfile
           elif [[ "${{ matrix.image }}" == "githubrunner" ]]; then
             IMAGE_NAME=github-runner-centos-bootc
+            CONTAINERFILE=github-runner.containerfile
           fi
           echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
           echo "IMAGE_FULL=ghcr.io/${{ github.repository }}/${IMAGE_NAME}" >> $GITHUB_ENV
           echo "BASE_IMAGE=ghcr.io/${{ github.repository }}/${IMAGE_NAME}:latest" >> $GITHUB_ENV
           echo "PR_IMAGE=localhost/${IMAGE_NAME}:${{ env.VERSION }}" >> $GITHUB_ENV
+          echo "CONTAINERFILE=${CONTAINERFILE}" >> $GITHUB_ENV
 
       - name: Manual Trivy Setup
         uses: aquasecurity/setup-trivy@e6c2c5e321ed9123bda567646e2f96565e34abe1 # v0.2.4
@@ -151,7 +155,7 @@ jobs:
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
             org.opencontainers.image.description=${{ env.IMAGE_DESC }}
             org.opencontainers.image.documentation=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.REPO_NAME }}/refs/heads/main/README.md
-            org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ env.REPO_NAME }}/blob/main/Containerfile
+            org.opencontainers.image.source=https://github.com/${{ github.repository_owner }}/${{ env.REPO_NAME }}/blob/main/${{ env.CONTAINERFILE }}
             org.opencontainers.image.title=${{ env.REPO_NAME }}
             org.opencontainers.image.url=https://github.com/${{ github.repository_owner }}/${{ env.REPO_NAME }}
             org.opencontainers.image.vendor=${{ github.repository_owner }}
@@ -192,7 +196,7 @@ jobs:
             REGISTRY_URL=ghcr.io
             PINGGY_HOST=${{ vars.PINGGY_HOST }}
           containerfiles: |
-            ${{ env.CONTEXT }}/Containerfile
+            ${{ env.CONTEXT }}/${{ env.CONTAINERFILE }}
           extra-args: |
             --secret id=registry_token,src=/tmp/REGISTRY_TOKEN
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
