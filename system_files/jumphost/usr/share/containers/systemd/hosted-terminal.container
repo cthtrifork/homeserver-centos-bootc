@@ -1,0 +1,20 @@
+[Unit]
+Description=Hosted (web)terminal
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=kasmweb/terminal:1.17.0
+Network=host
+PublishPort=6901:6901
+
+Env=VNC_PW=password
+
+# Always restart
+Restart=always
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
