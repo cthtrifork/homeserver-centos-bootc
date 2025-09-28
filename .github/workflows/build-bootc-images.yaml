@@ -297,7 +297,7 @@ jobs:
       - name: Download trivy report
         uses: actions/cache/restore@v4
         with:
-          path: ${{ github.workspace }}/${{ matrix.image }}/trivy.json
+          path: ${{ github.workspace }}/trivy.json
           key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.sha }}
           fail-on-cache-miss: true
 
@@ -450,7 +450,7 @@ jobs:
       - name: Download trivy.json
         uses: actions/cache/restore@v4
         with:
-          path: ${{ github.workspace }}/${{ matrix.image }}/trivy.json
+          path: ${{ github.workspace }}/trivy.json
           key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.sha }}
           fail-on-cache-miss: true
 
