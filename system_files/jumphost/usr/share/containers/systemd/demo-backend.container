@@ -9,7 +9,7 @@ PublishPort=8443:8443
 Volume=/etc/caddy-demo:/etc/caddy
 Volume=/var/lib/caddy-demo:/data
 # Tidy: disable admin API
-Env=CADDY_ADMIN=off
+Environment=CADDY_ADMIN=off
 
 [Service]
 Restart=always
