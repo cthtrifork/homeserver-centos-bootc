@@ -219,7 +219,7 @@ jobs:
         with:
           input: "${{ matrix.image }}.tar"
           format: json
-          output: ${{ github.workspace }}/${{ matrix.image }}/trivy.json
+          output: ${{ github.workspace }}/trivy.json
           ignore-unfixed: true
           #severity: HIGH,CRITICAL
           skip-setup-trivy: true
@@ -232,7 +232,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.sha }}
-          path: "${{ github.workspace }}/${{ matrix.image }}/trivy.json"
+          path: "${{ github.workspace }}/trivy.json"
     
       - name: Publish Trivy Output to Summary
         run: | #sh
@@ -567,7 +567,7 @@ jobs:
           ignore-unfixed: true
           severity: HIGH,CRITICAL
           format: "sarif"
-          output: "${{ matrix.image }}/trivy-results.sarif"
+          output: "trivy-results.sarif"
           skip-setup-trivy: true
           scanners: "vuln"
         env:
@@ -579,7 +579,7 @@ jobs:
         if: ${{ always() }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          sarif_file: "${{ github.workspace }}/${{ matrix.image }}/trivy-results.sarif"
+          sarif_file: "${{ github.workspace }}trivy-results.sarif"
           category: trivy
 
   test:
