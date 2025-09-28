@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-curl -i -u admin:yourpassword http://localhost:8080/
+curl -iv -u admin:yourpassword http://localhost:8080/
