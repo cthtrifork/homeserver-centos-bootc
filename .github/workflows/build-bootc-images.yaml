@@ -192,18 +192,18 @@ jobs:
       - name: Save PR image as tar
         run: |
           #podman save --format docker-archive -o app-all-tags.tar $(podman images --format '{{.Repository}}:{{.Tag}}' | grep '^localhost/${{ env.IMAGE_NAME }}:')
-          podman save "${{ env.PR_IMAGE }}" > image.tar
+          podman save "${{ env.PR_IMAGE }}" > "${{ matrix.image }}.tar"
 
       - name: Upload PR image
         uses: actions/cache/save@v4
         with:
-          key: ${{ runner.os }}-pr-image-${{ github.sha }}
-          path: "${{ github.workspace }}/image.tar"
+          key: ${{ runner.os }}-pr-${{ matrix.image }}-${{ github.sha }}
+          path: "${{ github.workspace }}/${{ matrix.image }}.tar"
 
       - name: Trivy REPORT table (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: image.tar
+          input: "${{ matrix.image }}.tar"
           ignore-unfixed: true
           #severity: HIGH,CRITICAL
           format: table
@@ -217,7 +217,7 @@ jobs:
       - name: Trivy vuln scan (JSON)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: image.tar
+          input: "${{ matrix.image }}.tar"
           format: json
           output: trivy.json
           ignore-unfixed: true
@@ -231,8 +231,8 @@ jobs:
       - name: Upload trivy json report as a Github artifact
         uses: actions/cache/save@v4
         with:
-          key: ${{ runner.os }}-trivy-${{ github.sha }}
-          path: "${{ github.workspace }}/trivy.json"
+          key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.sha }}
+          path: "${{ github.workspace }}/${{ matrix.image }}/trivy.json"
     
       - name: Publish Trivy Output to Summary
         run: | #sh
@@ -290,22 +290,22 @@ jobs:
       - name: Download PR image
         uses: actions/cache/restore@v4
         with:
-          path: ${{ github.workspace }}/image.tar
-          key: ${{ runner.os }}-pr-image-${{ github.sha }}
+          path: ${{ github.workspace }}/${{ matrix.image }}.tar
+          key: ${{ runner.os }}-pr-${{ matrix.image }}-${{ github.sha }}
           fail-on-cache-miss: true
 
       - name: Download trivy report
         uses: actions/cache/restore@v4
         with:
-          path: ${{ github.workspace }}/trivy.json
-          key: ${{ runner.os }}-trivy-${{ github.sha }}
+          path: ${{ github.workspace }}/${{ matrix.image }}/trivy.json
+          key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.sha }}
           fail-on-cache-miss: true
 
       - name: Load images
         shell: bash
         run: | #sh
           set -euo pipefail
-          podman load -q -i ${{ github.workspace }}/image.tar
+          podman load -q -i ${{ github.workspace }}/${{ matrix.image }}.tar
           podman images
           for tag in $TAGS; do
             podman tag "${{ env.PR_IMAGE }}" "${{ env.IMAGE_FULL }}:$tag"
@@ -346,10 +346,10 @@ jobs:
       - name: Trivy SBOM (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: image.tar
+          input: ${{ matrix.image }}.tar
           scan-type: image
           format: "github"
-          output: "dependency-results.sbom.json"
+          output: "${{ matrix.image }}/dependency-results.sbom.json"
           github-pat: ${{ secrets.GITHUB_TOKEN }} # or ${{ secrets.github_pat_name }} if you're using a PAT
           severity: "MEDIUM,HIGH,CRITICAL"
           scanners: "vuln"
@@ -362,7 +362,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: trivy-sbom-report
-          path: "${{ github.workspace }}/dependency-results.sbom.json"
+          path: "${{ github.workspace }}/${{ matrix.image }}/dependency-results.sbom.json"
           retention-days: 20 # 90 is the default
 
       - name: Install Cosign
@@ -410,7 +410,7 @@ jobs:
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
 
   run-on-pr:
-    name: "Run on PR: ${{ matrix.image }}""
+    name: "Run on PR: ${{ matrix.image }}"
     runs-on: ubuntu-latest
     needs: 
       - changes
@@ -443,15 +443,15 @@ jobs:
       - name: Download PR image
         uses: actions/cache/restore@v4
         with:
-          path: ${{ github.workspace }}/image.tar
-          key: ${{ runner.os }}-pr-image-${{ github.sha }}
+          path: ${{ github.workspace }}/${{ matrix.image }}.tar
+          key: ${{ runner.os }}-pr-${{ matrix.image }}-${{ github.sha }}
           fail-on-cache-miss: true
 
       - name: Download trivy.json
         uses: actions/cache/restore@v4
         with:
-          path: ${{ github.workspace }}/trivy.json
-          key: ${{ runner.os }}-trivy-${{ github.sha }}
+          path: ${{ github.workspace }}/${{ matrix.image }}/trivy.json
+          key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.sha }}
           fail-on-cache-miss: true
 
       - name: Log in to the Container registry
@@ -465,7 +465,7 @@ jobs:
         shell: bash
         run: | #sh
           podman pull -q ${{ env.BASE_IMAGE }} || true
-          podman load -q -i ${{ github.workspace }}/image.tar
+          podman load -q -i ${{ github.workspace }}/${{ matrix.image }}.tar
           podman images
 
       - name: Inspect images (Podman)
@@ -563,11 +563,11 @@ jobs:
       - name: Trivy REPORT (PR)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
-          input: image.tar
+          input: ${{ matrix.image }}.tar
           ignore-unfixed: true
           severity: HIGH,CRITICAL
           format: "sarif"
-          output: "trivy-results.sarif"
+          output: "${{ matrix.image }}/trivy-results.sarif"
           skip-setup-trivy: true
           scanners: "vuln"
         env:
@@ -579,7 +579,7 @@ jobs:
         if: ${{ always() }}
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          sarif_file: "${{ github.workspace }}/trivy-results.sarif"
+          sarif_file: "${{ github.workspace }}/${{ matrix.image }}/trivy-results.sarif"
           category: trivy
 
   test:
@@ -616,8 +616,8 @@ jobs:
       - name: Download PR image
         uses: actions/cache/restore@v4
         with:
-          path: ${{ github.workspace }}/image.tar
-          key: ${{ runner.os }}-pr-image-${{ github.sha }}
+          path: ${{ github.workspace }}/${{ matrix.image }}.tar
+          key: ${{ runner.os }}-pr-${{ matrix.image }}-${{ github.sha }}
           fail-on-cache-miss: true
 
       - name: Log in to the Container registry
@@ -633,7 +633,7 @@ jobs:
       - name: Load PR image
         shell: bash
         run: | #sh
-          sudo podman load -q -i ${{ github.workspace }}/image.tar
+          sudo podman load -q -i ${{ github.workspace }}/${{ matrix.image }}.tar
 
       - name: Install deps (socat sqlite3 qemu-system-x86 qemu-utils)
         run: |
