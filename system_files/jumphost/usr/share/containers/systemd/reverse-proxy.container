@@ -16,7 +16,7 @@ Environment=BASIC_PASS_HASH=$2a$14$3KsJEvmea4fhUFWHCRKcZO8AW/VaeyMUVugsS9pJQi1Tb
 Volume=/etc/caddy:/etc/caddy
 
 # Mount backend CA root into frontend as the trust anchor (RO!)
-#Volume=/var/lib/caddy-demo/pki/authorities/local/root.crt:/etc/caddy/upstream_ca.pem:ro
+Volume=/var/lib/caddy-demo/pki/authorities/local/root.crt:/etc/caddy/upstream_ca.pem:ro
 
 ReadOnly=true
 
