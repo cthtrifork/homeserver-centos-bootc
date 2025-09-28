@@ -23,6 +23,8 @@ ReadOnly=true
 
 [Service]
 Restart=always
+RestartSec=10s
+BindsTo=demo-backend.service
 
 [Install]
 WantedBy=multi-user.target
