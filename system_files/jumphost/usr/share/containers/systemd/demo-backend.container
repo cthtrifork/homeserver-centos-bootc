@@ -7,7 +7,7 @@ Wants=network-online.target
 ExecStartPre=/usr/bin/install -d -m 0755 /var/lib/caddy-demo
 Image=docker.io/library/caddy:2
 PublishPort=8443:8443
-Volume=/etc/caddy/demo-backend:/etc/caddy
+Volume=/etc/caddy-demo:/etc/caddy
 Volume=/var/lib/caddy-demo:/data
 # Tidy: disable admin API
 Environment=CADDY_ADMIN=off
