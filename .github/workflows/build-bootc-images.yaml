@@ -219,7 +219,7 @@ jobs:
         with:
           input: "${{ matrix.image }}.tar"
           format: json
-          output: trivy.json
+          output: ${{ github.workspace }}/${{ matrix.image }}/trivy.json
           ignore-unfixed: true
           #severity: HIGH,CRITICAL
           skip-setup-trivy: true
