@@ -1,6 +1,6 @@
 # HTTPS demo backend on 8443
 :8443 {
-    tls internal  # Caddy issues a cert for this host using its own internal CA
+    #tls internal  # Caddy issues a cert for this host using its own internal CA
     respond /health "ok"
     respond "Hello from internal.service.local" 200
 }

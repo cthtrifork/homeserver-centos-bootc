@@ -17,7 +17,7 @@ Environment=CADDY_ADMIN=off
 Volume=/etc/caddy/reverse-proxy:/etc/caddy
 
 # Mount backend CA root into frontend as the trust anchor (RO!)
-Volume=/var/lib/caddy-demo/pki/authorities/local/root.crt:/etc/caddy/upstream_ca.pem:ro
+#Volume=/var/lib/caddy-demo/pki/authorities/local/root.crt:/etc/caddy/upstream_ca.pem:ro
 
 ReadOnly=true
 
