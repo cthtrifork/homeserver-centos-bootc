@@ -749,7 +749,7 @@ jobs:
             -monitor unix:/tmp/qemu-monitor-sock,server,nowait \
             -daemonize > out/qemu-console.log 2>&1
 
-      - name: Wait for SSH
+      - name: Wait for SSH and run startup checks
         env:
           SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
           SSH_USERNAME: ${{ env.SSH_USERNAME }}
@@ -825,7 +825,6 @@ jobs:
 
       - name: Run system tests
         env:
-          CORE_SERVICES: "sshd NetworkManager"
           SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
           SSH_USERNAME: ${{ env.SSH_USERNAME }}
           SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
