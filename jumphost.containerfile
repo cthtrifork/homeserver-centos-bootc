@@ -24,6 +24,11 @@ RUN dnf -y install dnf-plugins-core procps-ng file qemu-guest-agent \
     # Dev tools
     rsync
 
+# Create directories for caddy services
+RUN mkdir -p /etc/caddy/demo-backend && \
+    mkdir -p /etc/caddy/reverse-proxy && \
+    mkdir -p /var/lib/caddy-demo
+
 # Install service
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     rsync -rvpK /ctx/system_files/jumphost/ /
