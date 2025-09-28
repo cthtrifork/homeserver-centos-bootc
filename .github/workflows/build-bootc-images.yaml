@@ -805,20 +805,6 @@ jobs:
             ${SSH_USERNAME}@localhost \
             "df -h"
 
-      - name: Basic health checks
-        env:
-          CORE_SERVICES: "sshd NetworkManager"
-          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
-          SSH_USERNAME: ${{ env.SSH_USERNAME }}
-          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
-        run: | #sh
-          # turn the env string into a Bash array
-          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
-          cat ./tests/healthcheck.sh | ssh "${SSH_OPTS[@]}" \
-            -i "$SSH_KEY" \
-            -p 2222 \
-            ${SSH_USERNAME}@localhost
-
       - name: Verify ghcr auth
         env:
           SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
@@ -834,6 +820,20 @@ jobs:
             "$SSH_USERNAME"@localhost \
               IMAGE_FULL="$IMAGE_FULL" \
               bash -s --
+
+      - name: Run system tests
+        env:
+          CORE_SERVICES: "sshd NetworkManager"
+          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        run: | #sh
+          # turn the env string into a Bash array
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+          cat ./tests/${{ matrix.image }}/test.sh | ssh "${SSH_OPTS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost
 
       # - name: /etc drift detector (fail on unexpected drift)
       #   env:
