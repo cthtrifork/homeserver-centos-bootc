@@ -45,12 +45,10 @@ jobs:
       pull-requests: read
       contents: read
     outputs:
-      # Expose matched filters as job 'packages' output variable
       image: ${{ steps.filter.outputs.changes }}
     steps:
       - uses: actions/checkout@v4
 
-      # 1) Map file changes to logical components
       - name: Filter paths
         id: filter
         uses: dorny/paths-filter@v3
@@ -60,15 +58,15 @@ jobs:
             homeserver:
               - 'system_files/homeserver/**'
               - 'Containerfile'
-              - **/homeserver/**
+              - '**/homeserver/**'
             jumphost:
               - 'system_files/jumphost/**'
               - 'jumphost.containerfile'
-              - **/jumphost/**
+              - '**/jumphost/**'
             githubrunner:
               - 'system_files/githubrunner/**'
               - 'github-runner.containerfile'
-              - **/githubrunner/**
+              - '**/githubrunner/**'
 
 
   build-bootc-image:
