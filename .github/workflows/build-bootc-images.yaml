@@ -59,12 +59,15 @@ jobs:
             homeserver:
               - 'system_files/homeserver/**'
               - 'Containerfile'
+              - **/homeserver/**
             jumphost:
               - 'system_files/jumphost/**'
               - 'jumphost.containerfile'
+              - **/jumphost/**
             githubrunner:
               - 'system_files/githubrunner/**'
               - 'github-runner.containerfile'
+              - **/githubrunner/**
 
 
   build-bootc-image:
