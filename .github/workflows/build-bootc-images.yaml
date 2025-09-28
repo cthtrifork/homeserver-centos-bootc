@@ -247,6 +247,7 @@ jobs:
           } >> $GITHUB_STEP_SUMMARY
 
   push-image:
+    name: Push image ${{ matrix.image }} to registry
     runs-on: ubuntu-latest
     # only run on main branch or if PR has "push" label
     if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) || contains(github.event.pull_request.labels.*.name, 'push')
@@ -409,6 +410,7 @@ jobs:
           COSIGN_PRIVATE_KEY: ${{ secrets.SIGNING_SECRET }}
 
   run-on-pr:
+    name: "Run on PR: ${{ matrix.image }}""
     runs-on: ubuntu-latest
     needs: 
       - changes
@@ -581,6 +583,7 @@ jobs:
           category: trivy
 
   test:
+    name: "E2E Test on: ${{ matrix.image }}"
     runs-on: ubuntu-latest
     needs: 
       - changes
