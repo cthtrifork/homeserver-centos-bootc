@@ -4,12 +4,10 @@ After=network-online.target
 Wants=network-online.target
 
 [Container]
-ExecStartPre=/usr/bin/install -d -m 0755 /var/lib/caddy-demo
 Image=docker.io/library/caddy:2
 PublishPort=8443:8443
 Volume=/etc/caddy-demo:/etc/caddy
 Volume=/var/lib/caddy-demo:/data
-
 
 [Service]
 Restart=always

@@ -10,9 +10,6 @@ PublishPort=6901:6901
 
 Environment=VNC_PW=password
 
-# Always restart
-Restart=always
-
 [Service]
 Restart=always
 
