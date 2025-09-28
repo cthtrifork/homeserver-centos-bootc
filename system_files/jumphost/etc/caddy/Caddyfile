@@ -1,6 +1,8 @@
-:80 {
-    # Basic auth (set user+hash via Env in the quadlet)
-    basicauth {
+{
+    admin off
+}
+:8080 {
+    basic_auth {
         {$BASIC_USER} {$BASIC_PASS_HASH}
     }
 
