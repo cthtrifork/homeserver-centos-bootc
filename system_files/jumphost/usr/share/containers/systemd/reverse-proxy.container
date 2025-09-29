@@ -4,6 +4,7 @@ Wants=network-online.target demo-backend.service
 After=network-online.target demo-backend.service
 
 [Container]
+User=65532:65532  # caddy user
 Image=docker.io/library/caddy:2
 PublishPort=8080:8080
 AutoUpdate=registry
