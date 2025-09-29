@@ -1,3 +1,4 @@
+# https://caddyserver.com/docs/caddyfile/options
 {
     admin off
     skip_install_trust
