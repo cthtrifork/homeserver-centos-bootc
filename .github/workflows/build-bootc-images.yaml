@@ -191,7 +191,7 @@ jobs:
       - name: Upload PR image
         uses: actions/cache/save@v4
         with:
-          key: ${{ runner.os }}-pr-image-${{ github.sha }}
+          key: ${{ runner.os }}-pr-image-${{ github.event.pull_request.number }}
           path: "${{ github.workspace }}/image.tar"
 
       - name: Trivy REPORT table (base:latest)
@@ -225,7 +225,7 @@ jobs:
       - name: Upload trivy json report as a Github artifact
         uses: actions/cache/save@v4
         with:
-          key: ${{ runner.os }}-trivy-${{ github.sha }}
+          key: ${{ runner.os }}-trivy-${{ github.event.pull_request.number }}
           path: "${{ github.workspace }}/trivy.json"
     
       - name: Publish Trivy Output to Summary
@@ -284,14 +284,14 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/image.tar
-          key: ${{ runner.os }}-pr-image-${{ github.sha }}
+          key: ${{ runner.os }}-pr-image-${{ github.event.pull_request.number }}
           fail-on-cache-miss: true
 
       - name: Download trivy report
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/trivy.json
-          key: ${{ runner.os }}-trivy-${{ github.sha }}
+          key: ${{ runner.os }}-trivy-${{ github.event.pull_request.number }}
           fail-on-cache-miss: true
 
       - name: Load images
@@ -436,14 +436,14 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/image.tar
-          key: ${{ runner.os }}-pr-image-${{ github.sha }}
+          key: ${{ runner.os }}-pr-image-${{ github.event.pull_request.number }}
           fail-on-cache-miss: true
 
       - name: Download trivy.json
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/trivy.json
-          key: ${{ runner.os }}-trivy-${{ github.sha }}
+          key: ${{ runner.os }}-trivy-${{ github.event.pull_request.number }}
           fail-on-cache-miss: true
 
       - name: Log in to the Container registry
@@ -608,7 +608,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/image.tar
-          key: ${{ runner.os }}-pr-image-${{ github.sha }}
+          key: ${{ runner.os }}-pr-image-${{ github.event.pull_request.number }}
           fail-on-cache-miss: true
 
       - name: Log in to the Container registry
