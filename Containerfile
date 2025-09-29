@@ -43,6 +43,7 @@ RUN dnf -y install \
       # python3-pip
       tree \
       git \
+      make \
     && dnf -y install 'dnf-command(config-manager)'
 
 # pip3 dependencies
