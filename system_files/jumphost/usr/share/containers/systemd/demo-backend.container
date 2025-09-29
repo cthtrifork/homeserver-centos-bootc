@@ -15,6 +15,9 @@ User=65532:65532
 Volume=/etc/caddy-demo:/etc/caddy:Z,ro
 # Persistent writable state for Caddy (/data)
 Volume=/var/lib/caddy-demo:/data:Z
+# Config data
+Volume=/var/lib/caddy-demo/config:/config:Z
+
 
 ReadOnly=true
 

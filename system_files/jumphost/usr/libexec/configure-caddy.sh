@@ -5,7 +5,7 @@ set -euo pipefail
 mkdir -p /etc/caddy-demo /etc/caddy /var/lib/caddy-demo /var/lib/caddy-frontend
 
 # Ensure non-root Caddy (uid/gid 65532) can write to the data dirs
-chown -R 65532:65532 /var/lib/caddy-demo /var/lib/caddy-frontend
+chown -R 65532:65532 /var/lib/caddy-demo/config /var/lib/caddy-frontend/config
 
 # If you keep configs locally, make them readable
 chmod 755 /etc/caddy-demo /etc/caddy

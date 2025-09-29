@@ -1,5 +1,7 @@
 {
     admin off
+    skip_install_trust
+    local_certs
 }
 # HTTPS demo backend on 8443
 :8443 {

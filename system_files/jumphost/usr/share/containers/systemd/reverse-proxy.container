@@ -22,7 +22,12 @@ Volume=/etc/caddy:/etc/caddy:Z,ro
 # Writable state for this Caddy
 Volume=/var/lib/caddy-frontend:/data:Z
 
+# Config data
+Volume=/var/lib/caddy-frontend/config:/config:Z
+
+# CA Trust
 Volume=/var/lib/caddy-demo/pki/authorities/local/root.crt:/etc/caddy/upstream_ca.pem:Z,ro
+
 ReadOnly=true
 
 [Service]
