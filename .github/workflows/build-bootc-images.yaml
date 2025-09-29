@@ -13,17 +13,11 @@ on:
       - "config.toml"
       - "system_files/homeserver/**"
       - "build_files/**"
+      - "tests/**"
       - ".github/workflows/build-bootc-images.yaml"
   push:
     branches:
       - main
-    paths:
-      - "Containerfile"
-      - "*.containerfile"
-      - "config.toml"
-      - "system_files/homeserver/**"
-      - "build_files/**"
-      - ".github/workflows/build-bootc-images.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -44,12 +38,10 @@ jobs:
       pull-requests: read
       contents: read
     outputs:
-      # Expose matched filters as job 'packages' output variable
       image: ${{ steps.filter.outputs.changes }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5
 
-      # 1) Map file changes to logical components
       - name: Filter paths
         id: filter
         uses: dorny/paths-filter@v3
@@ -59,12 +51,16 @@ jobs:
             homeserver:
               - 'system_files/homeserver/**'
               - 'Containerfile'
+              - '**/homeserver/**'
+              - 'build_files/**'
             jumphost:
               - 'system_files/jumphost/**'
               - 'jumphost.containerfile'
+              - '**/jumphost/**'
             githubrunner:
               - 'system_files/githubrunner/**'
               - 'github-runner.containerfile'
+              - '**/githubrunner/**'
 
 
   build-bootc-image:
