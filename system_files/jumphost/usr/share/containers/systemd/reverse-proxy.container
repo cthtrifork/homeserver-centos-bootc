@@ -26,7 +26,7 @@ Volume=/var/lib/caddy-frontend:/data:Z
 Volume=/var/lib/caddy-frontend/config:/config:Z
 
 # CA Trust
-Volume=/var/lib/caddy-demo/pki/authorities/local/root.crt:/etc/caddy/upstream_ca.pem:Z,ro
+Volume=/var/lib/caddy-demo/caddy/pki/authorities/local/root.crt:/etc/caddy/upstream_ca.pem:Z,ro
 
 ReadOnly=true
 
