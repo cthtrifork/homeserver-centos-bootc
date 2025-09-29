@@ -40,6 +40,7 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 # Activate services
 RUN systemctl enable qemu-guest-agent && \
     systemctl enable podman.socket && \
+    systemctl enable caddy-config.service && \
     systemctl enable podman-auto-update.timer
     
 RUN bootc container lint

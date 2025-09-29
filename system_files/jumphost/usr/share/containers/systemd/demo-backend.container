@@ -1,7 +1,7 @@
 [Unit]
 Description=Demo HTTPS backend (internal.service.local) via Caddy
-After=network-online.target
-Wants=network-online.target
+After=network-online.target caddy-config.service
+Wants=network-online.target caddy-config.service
 
 [Container]
 Image=docker.io/library/caddy:2
