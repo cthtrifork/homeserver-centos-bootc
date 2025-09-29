@@ -11,3 +11,10 @@ for s in $CORE_SERVICES; do
     }
 done
 echo "all ok"
+
+# check if env var ENV_LOAD is loaded
+if [ -z "${ENV_LOAD:-}" ]; then
+    echo "ENV_LOAD is not set"
+    exit 1
+fi
+echo "ENV_LOAD is set to '$ENV_LOAD'"
