@@ -2,29 +2,32 @@
 Description=Reverse proxy (frontend)
 Wants=network-online.target demo-backend.service
 After=network-online.target demo-backend.service
+BindsTo=demo-backend.service
 
 [Container]
-User=65532:65532  # caddy user
 Image=docker.io/library/caddy:2
 PublishPort=8080:8080
 AutoUpdate=registry
 
-# Basic auth (bcrypt from `caddy hash-password --algorithm bcrypt --plaintext 'yourpassword'`)
+# Non-root inside the container
+User=65532:65532
+
+# Basic auth (bcrypt hash from `caddy hash-password`)
 Environment=BASIC_USER=admin
 Environment=BASIC_PASS_HASH=$2a$14$3KsJEvmea4fhUFWHCRKcZO8AW/VaeyMUVugsS9pJQi1TbofmTr7su
-# Mount frontend config dir
-Volume=/etc/caddy:/etc/caddy
-# Mount backend CA root into frontend as the trust anchor (RO!)
-Volume=/var/lib/caddy-demo/pki/authorities/local/root.crt:/etc/caddy/upstream_ca.pem:ro
-# Writable data dir for Caddy’s state
+
+# Frontend config (read-only) + SELinux relabel
+Volume=/etc/caddy:/etc/caddy:Z,ro
+
+# Writable state for this Caddy
 Volume=/var/lib/caddy-frontend:/data:Z
 
+Volume=/var/lib/caddy-demo/pki/authorities/local/root.crt:/etc/caddy/upstream_ca.pem:Z,ro
 ReadOnly=true
 
 [Service]
 Restart=always
 RestartSec=10s
-BindsTo=demo-backend.service
 
 [Install]
 WantedBy=multi-user.target

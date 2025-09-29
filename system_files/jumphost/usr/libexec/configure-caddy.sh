@@ -1,17 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# demo-backend.container
-mkdir -p /etc/caddy-demo /var/lib/caddy-demo
-# Own the data dir as the caddy image's UID/GID 65532
-chown -R 65532:65532 /var/lib/caddy-demo
-# Config can stay root-owned but readable:
-chmod 755 /etc/caddy-demo
+# Create config + state dirs
+mkdir -p /etc/caddy-demo /etc/caddy /var/lib/caddy-demo /var/lib/caddy-frontend
 
-# reverse-proxy.container
-mkdir -p /etc/caddy /var/lib/caddy-frontend 
-# Ensure Caddy can write its data
-chown -R 65532:65532 /var/lib/caddy-frontend
-chmod 755 /etc/caddy
+# Ensure non-root Caddy (uid/gid 65532) can write to the data dirs
+chown -R 65532:65532 /var/lib/caddy-demo /var/lib/caddy-frontend
+
+# If you keep configs locally, make them readable
+chmod 755 /etc/caddy-demo /etc/caddy
 
 echo "Caddy is now configured and is ready to run"
