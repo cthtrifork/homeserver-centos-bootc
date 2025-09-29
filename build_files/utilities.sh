@@ -61,7 +61,7 @@ tar -zxvf /tmp/k9s.tar.gz -C /usr/bin/ --exclude=LICENSE --exclude=README.md
 /usr/bin/k9s completion bash >/etc/bash_completion.d/k9s.sh
 
 log "Installing sops"
-SOPS_VERSION=v3.10.2 # renovate: datasource=github-releases depName=getsops/sops
+SOPS_VERSION=v3.11.0 # renovate: datasource=github-releases depName=getsops/sops
 curl -sLo /tmp/sops \
     "$(/ctx/build_files/github-release-url.sh getsops/sops ${MACHINE}.${ARCH} $SOPS_VERSION)"
 install -o root -g root -m 0755 /tmp/sops /usr/bin/sops
