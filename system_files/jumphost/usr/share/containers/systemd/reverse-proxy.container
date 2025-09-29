@@ -30,6 +30,8 @@ Volume=/var/lib/caddy-demo/caddy/pki/authorities/local/root.crt:/etc/caddy/upstr
 
 ReadOnly=true
 
+Network=host # needed to reach demo-backend
+
 [Service]
 Restart=always
 RestartSec=10s
