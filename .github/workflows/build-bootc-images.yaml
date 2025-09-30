@@ -191,8 +191,8 @@ jobs:
       - name: Upload PR image
         uses: actions/cache/save@v4
         with:
-          key: ${{ runner.os }}-pr-${{ matrix.image }}-${{ github.sha }}
           path: "${{ github.workspace }}/${{ matrix.image }}.tar"
+          key: ${{ runner.os }}-pr-image-${{ github.event.pull_request.number }}
 
       - name: Trivy REPORT table (base:latest)
         uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
@@ -225,7 +225,7 @@ jobs:
       - name: Upload trivy json report as a Github artifact
         uses: actions/cache/save@v4
         with:
-          key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.sha }}
+          key: ${{ runner.os }}-trivy-${{ github.event.pull_request.number }}
           path: "${{ github.workspace }}/trivy.json"
     
       - name: Publish Trivy Output to Summary
@@ -285,14 +285,15 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/${{ matrix.image }}.tar
-          key: ${{ runner.os }}-pr-${{ matrix.image }}-${{ github.sha }}
+          key: ${{ runner.os }}-pr-image-${{ github.event.pull_request.number }}
+
           fail-on-cache-miss: true
 
       - name: Download trivy report
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/trivy.json
-          key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.sha }}
+          key: ${{ runner.os }}-trivy-${{ github.event.pull_request.number }}
           fail-on-cache-miss: true
 
       - name: Load images
@@ -438,14 +439,14 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/${{ matrix.image }}.tar
-          key: ${{ runner.os }}-pr-${{ matrix.image }}-${{ github.sha }}
+          key: ${{ runner.os }}-pr-image-${{ github.event.pull_request.number }}
           fail-on-cache-miss: true
 
       - name: Download trivy.json
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/trivy.json
-          key: ${{ runner.os }}-trivy-${{ matrix.image }}-${{ github.sha }}
+          key: ${{ runner.os }}-trivy-${{ github.event.pull_request.number }}
           fail-on-cache-miss: true
 
       - name: Log in to the Container registry
@@ -603,7 +604,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ${{ github.workspace }}/${{ matrix.image }}.tar
-          key: ${{ runner.os }}-pr-${{ matrix.image }}-${{ github.sha }}
+          key: ${{ runner.os }}-pr-image-${{ github.event.pull_request.number }}
           fail-on-cache-miss: true
 
       - name: Log in to the Container registry
