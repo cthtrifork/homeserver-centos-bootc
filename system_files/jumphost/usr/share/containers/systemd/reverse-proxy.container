@@ -7,6 +7,7 @@ BindsTo=demo-backend.service
 [Container]
 Image=docker.io/library/caddy:2
 #PublishPort=8080:8080
+Network=host # needed to reach demo-backend
 AutoUpdate=registry
 
 # Non-root inside the container
@@ -30,7 +31,7 @@ Volume=/var/lib/caddy-demo/caddy/pki/authorities/local/root.crt:/etc/caddy/upstr
 
 ReadOnly=true
 
-Network=host # needed to reach demo-backend
+
 
 [Service]
 Restart=always
