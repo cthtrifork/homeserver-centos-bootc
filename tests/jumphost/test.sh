@@ -12,5 +12,6 @@ if [[ "$code" == "200" && "$body" == "ok" ]]; then
   echo "✅ Reverse proxy is working (200 + ok)"
 else
   echo "❌ Test failed (code=$code, body='$body')"
+  curl -u admin:yourpassword -s http://localhost:8080/health
   exit 1
 fi
