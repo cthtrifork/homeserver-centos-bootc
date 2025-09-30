@@ -199,11 +199,12 @@ jobs:
         with:
           input: "${{ matrix.image }}.tar"
           ignore-unfixed: true
-          #severity: HIGH,CRITICAL
           format: table
           output: trivy-results.txt
           skip-setup-trivy: true
           scanners: "vuln"
+          vuln-type: 'library'
+          severity: 'CRITICAL,HIGH,MEDIUM'
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
@@ -215,9 +216,10 @@ jobs:
           format: json
           output: ${{ github.workspace }}/trivy.json
           ignore-unfixed: true
-          #severity: HIGH,CRITICAL
           skip-setup-trivy: true
           scanners: "vuln"
+          vuln-type: 'library'
+          severity: 'CRITICAL,HIGH,MEDIUM'
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
@@ -326,6 +328,8 @@ jobs:
           output: "trivy-results.sarif"
           skip-setup-trivy: true
           scanners: "vuln"
+          vuln-type: 'library'
+          severity: 'CRITICAL,HIGH,MEDIUM'
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
@@ -346,9 +350,10 @@ jobs:
           format: "github"
           output: "${{ matrix.image }}/dependency-results.sbom.json"
           github-pat: ${{ secrets.GITHUB_TOKEN }} # or ${{ secrets.github_pat_name }} if you're using a PAT
-          severity: "MEDIUM,HIGH,CRITICAL"
           scanners: "vuln"
           skip-setup-trivy: true
+          vuln-type: 'library'
+          severity: 'CRITICAL,HIGH,MEDIUM'
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
@@ -560,11 +565,12 @@ jobs:
         with:
           input: ${{ matrix.image }}.tar
           ignore-unfixed: true
-          severity: HIGH,CRITICAL
           format: "sarif"
           output: "trivy-results.sarif"
           skip-setup-trivy: true
           scanners: "vuln"
+          vuln-type: 'library'
+          severity: HIGH,CRITICAL
         env:
           TRIVY_SKIP_DB_UPDATE: true
           TRIVY_SKIP_JAVA_DB_UPDATE: true
