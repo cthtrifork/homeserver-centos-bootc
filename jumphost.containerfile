@@ -22,7 +22,11 @@ RUN --mount=type=secret,id=creds,required=true cp /run/secrets/creds /usr/lib/co
 RUN dnf -y install 'dnf-command(config-manager)'
 RUN dnf -y install dnf-plugins-core procps-ng file qemu-guest-agent \
     # Dev tools
-    rsync
+    rsync tree
+
+# Create directories for caddy services
+RUN mkdir -p /etc/caddy/demo-backend && \
+    mkdir -p /etc/caddy/reverse-proxy
 
 # Install service
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
@@ -36,6 +40,7 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 # Activate services
 RUN systemctl enable qemu-guest-agent && \
     systemctl enable podman.socket && \
+    systemctl enable caddy-config.service && \
     systemctl enable podman-auto-update.timer
     
 RUN bootc container lint
