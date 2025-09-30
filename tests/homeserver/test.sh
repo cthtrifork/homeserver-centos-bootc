@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CORE_SERVICES="sshd NetworkManager pinggy.service homer-groups.service" # todo
+CORE_SERVICES="pinggy.service homer-groups.service" # todo
 echo "--- core services ---"
 for s in $CORE_SERVICES; do
     systemctl is-active --quiet "$s" || {

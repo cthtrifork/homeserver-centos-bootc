@@ -2,6 +2,7 @@
     "recommendations": [
         "github.vscode-github-actions",
         "redhat.vscode-yaml",
-        "ruschaaf.extended-embedded-languages"
+        "ruschaaf.extended-embedded-languages",
+        "matthewpi.caddyfile-support"
     ]
 }

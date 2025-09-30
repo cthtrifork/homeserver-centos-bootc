@@ -4,14 +4,11 @@ After=network-online.target
 Wants=network-online.target
 
 [Container]
-Image=kasmweb/terminal:1.17.0
+Image=docker.io/kasmweb/terminal:1.17.0
 Network=host
 PublishPort=6901:6901
 
-Env=VNC_PW=password
-
-# Always restart
-Restart=always
+Environment=VNC_PW=password
 
 [Service]
 Restart=always

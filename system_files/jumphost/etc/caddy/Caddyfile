@@ -1,6 +1,9 @@
-:80 {
-    # Basic auth (set user+hash via Env in the quadlet)
-    basicauth {
+# https://caddyserver.com/docs/caddyfile/options
+{
+    admin off
+}
+:8080 {
+    basic_auth {
         {$BASIC_USER} {$BASIC_PASS_HASH}
     }
 
