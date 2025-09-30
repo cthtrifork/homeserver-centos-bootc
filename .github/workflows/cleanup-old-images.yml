@@ -20,7 +20,8 @@ jobs:
           delete-orphaned-images: true
           owner: ${{ github.repository_owner }}
           repository: ${{ github.event.repository.name }}
-          package: homeserver-centos-bootc
+          package: homeserver-centos-bootc*
+          expand-packages: true
           keep-n-tagged: 7
           keep-n-untagged: 7
           # dry-run: true
