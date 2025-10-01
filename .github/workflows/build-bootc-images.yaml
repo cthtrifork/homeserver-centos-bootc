@@ -314,7 +314,7 @@ jobs:
         id: push-to-ghcr
         uses: redhat-actions/push-to-registry@5ed88d269cf581ea9ef6dd6806d01562096bee9c # v2
         with:
-          image: ${{ needs.build-bootc-image.outputs.image }}
+          image: ${{ env.IMAGE_NAME }}
           tags: ${{ needs.build-bootc-image.outputs.tags }}
           registry: ghcr.io/${{ github.repository }}
 
@@ -560,20 +560,6 @@ jobs:
           path: comment.md
           skip_unchanged: true
 
-      - name: Trivy REPORT (PR)
-        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
-        with:
-          input: ${{ matrix.image }}.tar
-          ignore-unfixed: true
-          format: "sarif"
-          output: "trivy-results.sarif"
-          skip-setup-trivy: true
-          scanners: "vuln"
-          vuln-type: 'library'
-          severity: HIGH,CRITICAL
-        env:
-          TRIVY_SKIP_DB_UPDATE: true
-          TRIVY_SKIP_JAVA_DB_UPDATE: true
 
   test:
     name: "E2E Test on: ${{ matrix.image }}"
