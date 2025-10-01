@@ -303,10 +303,10 @@ jobs:
         run: | #sh
           set -euo pipefail
           podman load -q -i ${{ github.workspace }}/${{ matrix.image }}.tar
-          podman images
           for tag in $TAGS; do
             podman tag "${{ env.PR_IMAGE }}" "${{ env.IMAGE_FULL }}:$tag"
           done
+          podman images
         env:
           TAGS: ${{ needs.build-bootc-image.outputs.tags }}
 
