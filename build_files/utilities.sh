@@ -23,7 +23,7 @@ curl -sLo /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${MACHI
 install -o root -g root -m 0755 /tmp/kubectl /usr/bin/kubectl
 /usr/bin/kubectl completion bash >/etc/bash_completion.d/kubectl.sh
 
-log "Installing kubelogin"
+log "Installing kubectl-oidc-login (kubelogin)"
 KUBELOGIN_VERSION="v1.34.1" # renovate: datasource=github-releases depName=int128/kubelogin
 curl -sLo /tmp/kubelogin.zip \
     "$(/ctx/build_files/github-release-url.sh int128/kubelogin ${MACHINE}.${ARCH}.zip $KUBELOGIN_VERSION)"
@@ -31,6 +31,13 @@ unzip /tmp/kubelogin.zip -d /usr/bin/ -x "LICENSE" "README.md"
 # Create symlinks so kubectl recognizes the plugin
 ln -sf /usr/bin/kubelogin /usr/bin/kubectl-oidc-login
 /usr/bin/kubelogin completion bash >/etc/bash_completion.d/kubelogin.sh
+
+log "Installing kubectl-cnpg"
+KUBECTLCNPG_VERSION="v1.27.0" # renovate: datasource=github-releases depName=cloudnative-pg/cloudnative-pg
+curl -sLo /tmp/kubectl-cnpg.tar.gz \
+    "$(/ctx/build_files/github-release-url.sh cloudnative-pg/cloudnative-pg "kubectl.*_${MACHINE}_x86_64.tar.gz" $KUBECTLCNPG_VERSION)"
+tar -zxvf /tmp/kubectl-cnpg.tar.gz -C /usr/bin/
+/usr/bin/kubectl-cnpg completion bash >/etc/bash_completion.d/kubectl-cnpg.sh
 
 log "Installing kind"
 KIND_VERSION="v0.30.0" # renovate: datasource=github-releases depName=kubernetes-sigs/kind
