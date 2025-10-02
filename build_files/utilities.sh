@@ -43,7 +43,7 @@ log "Installing kind"
 KIND_VERSION="v0.30.0" # renovate: datasource=github-releases depName=kubernetes-sigs/kind
 curl -sLo /tmp/kind \
     "$(/ctx/build_files/github-release-url.sh kubernetes-sigs/kind ${MACHINE}.${ARCH} $KIND_VERSION)"
-install -o root -g root -m 0755 /tmp/kind /usr/bin/kind --exclude=LICENSE --exclude=README.md --exclude=./licenses
+install -o root -g root -m 0755 /tmp/kind /usr/bin/kind
 /usr/bin/kind completion bash >/etc/bash_completion.d/kind.sh
 
 log "Installing flux"
@@ -57,7 +57,7 @@ log "Installing kustomize"
 KUSTOMIZE_VERSION="kustomize/v5.7.1" # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize
 curl -sLo /tmp/kustomize.tar.gz \
     "$(/ctx/build_files/github-release-url.sh kubernetes-sigs/kustomize ${MACHINE}.${ARCH}.tar.gz $KUSTOMIZE_VERSION)"
-tar -zxvf /tmp/kustomize.tar.gz -C /usr/bin/
+tar -zxvf /tmp/kustomize.tar.gz -C /usr/bin/ --exclude=LICENSE --exclude=README.md --exclude=./licenses
 /usr/bin/kustomize completion bash >/etc/bash_completion.d/kustomize.sh
 
 log "Installing k9s"
