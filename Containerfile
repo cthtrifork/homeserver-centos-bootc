@@ -10,6 +10,9 @@ RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-su
 # Write some metadata
 RUN echo VARIANT="HomeServer bootc OS" && echo VARIANT_ID=com.github.caspertdk.homeserver-bootc >> /usr/lib/os-release
 
+# Set timezone
+RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
+
 # Registry auth
 ARG REGISTRY_URL
 ARG REGISTRY_USERNAME
@@ -32,6 +35,7 @@ RUN --mount=type=secret,id=creds,required=true \
 # Install common utilities
 #RUN dnf -y group install 'Development Tools' # this one is huge and includes java!
 RUN dnf -y install \
+      ca-certificates \
       dnf-plugins-core \
       procps-ng \
       curl \
