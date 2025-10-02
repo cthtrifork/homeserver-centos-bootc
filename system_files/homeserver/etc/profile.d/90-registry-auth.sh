@@ -1,2 +1,2 @@
-ENV_LOAD=profiled
-GITHUB_ACTOR=cthtrifork
+export ENV_LOAD=profiled
+export GITHUB_ACTOR=cthtrifork
