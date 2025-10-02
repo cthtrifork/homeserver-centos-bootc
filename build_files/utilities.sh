@@ -36,21 +36,21 @@ log "Installing kubectl-cnpg"
 KUBECTLCNPG_VERSION="v1.27.0" # renovate: datasource=github-releases depName=cloudnative-pg/cloudnative-pg
 curl -sLo /tmp/kubectl-cnpg.tar.gz \
     "$(/ctx/build_files/github-release-url.sh cloudnative-pg/cloudnative-pg "kubectl.*_${MACHINE}_x86_64.tar.gz" $KUBECTLCNPG_VERSION)"
-tar -zxvf /tmp/kubectl-cnpg.tar.gz -C /usr/bin/ --exclude=LICENSE --exclude=README.md --exclude=licenses/
+tar -zxvf /tmp/kubectl-cnpg.tar.gz -C /usr/bin/ --exclude=LICENSE --exclude=README.md --exclude=./licenses
 /usr/bin/kubectl-cnpg completion bash >/etc/bash_completion.d/kubectl-cnpg.sh
 
 log "Installing kind"
 KIND_VERSION="v0.30.0" # renovate: datasource=github-releases depName=kubernetes-sigs/kind
 curl -sLo /tmp/kind \
     "$(/ctx/build_files/github-release-url.sh kubernetes-sigs/kind ${MACHINE}.${ARCH} $KIND_VERSION)"
-install -o root -g root -m 0755 /tmp/kind /usr/bin/kind --exclude=LICENSE --exclude=README.md --exclude=licenses/
+install -o root -g root -m 0755 /tmp/kind /usr/bin/kind --exclude=LICENSE --exclude=README.md --exclude=./licenses
 /usr/bin/kind completion bash >/etc/bash_completion.d/kind.sh
 
 log "Installing flux"
 FLUX_VERSION="v2.7.0" # renovate: datasource=github-releases depName=fluxcd/flux2
 curl -sLo /tmp/flux.tar.gz \
     "$(/ctx/build_files/github-release-url.sh fluxcd/flux2 ${MACHINE}.${ARCH}.tar.gz $FLUX_VERSION)"
-tar -zxvf /tmp/flux.tar.gz -C /usr/bin/ --exclude=LICENSE --exclude=README.md --exclude=licenses/
+tar -zxvf /tmp/flux.tar.gz -C /usr/bin/ --exclude=LICENSE --exclude=README.md --exclude=./licenses
 /usr/bin/flux completion bash >/etc/bash_completion.d/flux.sh
 
 log "Installing kustomize"
@@ -64,7 +64,7 @@ log "Installing k9s"
 K9S_VERSION=v0.50.13 # renovate: datasource=github-releases depName=derailed/k9s
 curl -sLo /tmp/k9s.tar.gz \
     "$(/ctx/build_files/github-release-url.sh derailed/k9s ${MACHINE}.${ARCH}.tar.gz $K9S_VERSION)"
-tar -zxvf /tmp/k9s.tar.gz -C /usr/bin/ --exclude=LICENSE --exclude=README.md
+tar -zxvf /tmp/k9s.tar.gz -C /usr/bin/ --exclude=LICENSE --exclude=README.md --exclude=./licenses
 /usr/bin/k9s completion bash >/etc/bash_completion.d/k9s.sh
 
 log "Installing sops"
@@ -103,5 +103,5 @@ log "Installing helm"
 HELM_VERSION=$(curl -L -s https://get.helm.sh/helm-latest-version)
 HELM_VERSION="v3.19.0" # renovate: datasource=github-releases depName=helm/helm
 curl -sLo /tmp/helm.tar.gz "https://get.helm.sh/helm-${HELM_VERSION}-${MACHINE}-${ARCH}.tar.gz"
-tar -zxvf /tmp/helm.tar.gz -C /usr/bin/ --strip-components=1 --exclude=LICENSE --exclude README.md
+tar -zxvf /tmp/helm.tar.gz -C /usr/bin/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=./licenses
 /usr/bin/helm completion bash >/etc/bash_completion.d/helm.sh
