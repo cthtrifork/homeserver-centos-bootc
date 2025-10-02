@@ -50,7 +50,7 @@ RUN dnf -y install \
 # RUN pip3 install glances
 
 RUN --mount=type=secret,id=registry_token,required=true GITHUB_TOKEN="$(cat /run/secrets/registry_token)"; \
-    printf "GITHUB_TOKEN=%s\n" "$GITHUB_TOKEN" | tee /etc/profile.d/89-github-auth.sh
+    printf "export GITHUB_TOKEN=%s\n" "$GITHUB_TOKEN" | tee /etc/profile.d/89-github-auth.sh
 ARG PINGGY_HOST
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     #--mount=type=cache,dst=/var/cache \
