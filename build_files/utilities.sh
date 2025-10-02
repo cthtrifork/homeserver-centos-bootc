@@ -36,21 +36,21 @@ log "Installing kubectl-cnpg"
 KUBECTLCNPG_VERSION="v1.27.0" # renovate: datasource=github-releases depName=cloudnative-pg/cloudnative-pg
 curl -sLo /tmp/kubectl-cnpg.tar.gz \
     "$(/ctx/build_files/github-release-url.sh cloudnative-pg/cloudnative-pg "kubectl.*_${MACHINE}_x86_64.tar.gz" $KUBECTLCNPG_VERSION)"
-tar -zxvf /tmp/kubectl-cnpg.tar.gz -C /usr/bin/
+tar -zxvf /tmp/kubectl-cnpg.tar.gz -C /usr/bin/ --exclude=LICENSE --exclude=README.md --exclude=licenses/
 /usr/bin/kubectl-cnpg completion bash >/etc/bash_completion.d/kubectl-cnpg.sh
 
 log "Installing kind"
 KIND_VERSION="v0.30.0" # renovate: datasource=github-releases depName=kubernetes-sigs/kind
 curl -sLo /tmp/kind \
     "$(/ctx/build_files/github-release-url.sh kubernetes-sigs/kind ${MACHINE}.${ARCH} $KIND_VERSION)"
-install -o root -g root -m 0755 /tmp/kind /usr/bin/kind
+install -o root -g root -m 0755 /tmp/kind /usr/bin/kind --exclude=LICENSE --exclude=README.md --exclude=licenses/
 /usr/bin/kind completion bash >/etc/bash_completion.d/kind.sh
 
 log "Installing flux"
 FLUX_VERSION="v2.7.0" # renovate: datasource=github-releases depName=fluxcd/flux2
 curl -sLo /tmp/flux.tar.gz \
     "$(/ctx/build_files/github-release-url.sh fluxcd/flux2 ${MACHINE}.${ARCH}.tar.gz $FLUX_VERSION)"
-tar -zxvf /tmp/flux.tar.gz -C /usr/bin/
+tar -zxvf /tmp/flux.tar.gz -C /usr/bin/ --exclude=LICENSE --exclude=README.md --exclude=licenses/
 /usr/bin/flux completion bash >/etc/bash_completion.d/flux.sh
 
 log "Installing kustomize"
