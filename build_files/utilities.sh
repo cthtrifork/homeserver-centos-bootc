@@ -17,7 +17,6 @@ curl -sLo /tmp/age.tar.gz \
 tar -zxvf /tmp/age.tar.gz -C /usr/bin/ --strip-components=1 --exclude=LICENSE
 
 log "Installing kubectl"
-KUBECTL_VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
 KUBECTL_VERSION="v1.34.1" # renovate: datasource=github-releases depName=kubernetes/kubernetes
 curl -sLo /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/${MACHINE}/${ARCH}/kubectl"
 install -o root -g root -m 0755 /tmp/kubectl /usr/bin/kubectl
@@ -100,7 +99,6 @@ curl -sLo /tmp/shfmt \
 install -o root -g root -m 0755 /tmp/shfmt /usr/bin/shfmt
 
 log "Installing helm"
-HELM_VERSION=$(curl -L -s https://get.helm.sh/helm-latest-version)
 HELM_VERSION="v3.19.0" # renovate: datasource=github-releases depName=helm/helm
 curl -sLo /tmp/helm.tar.gz "https://get.helm.sh/helm-${HELM_VERSION}-${MACHINE}-${ARCH}.tar.gz"
 tar -zxvf /tmp/helm.tar.gz -C /usr/bin/ --strip-components=1 --exclude=LICENSE --exclude=README.md --exclude=licenses
