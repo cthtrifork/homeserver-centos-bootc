@@ -27,6 +27,11 @@ on:
         type: string
         required: true
         default: "."
+      tag:
+        description: "Image tag"
+        type: string
+        required: true
+        default: "latest"
 
 jobs:
   create-vmdk:
@@ -55,7 +60,7 @@ jobs:
           config-file: ${{ inputs.context }}/config.toml
           type: iso
           rootfs: xfs
-          image: ghcr.io/${{ github.repository }}/${{ inputs.image_name }}:latest
+          image: ghcr.io/${{ github.repository }}/${{ inputs.image_name }}:${{ inputs.tag }}
 
       - name: Upload VMDK artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
