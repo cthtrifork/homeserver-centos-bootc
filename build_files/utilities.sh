@@ -105,6 +105,13 @@ curl -sLo /tmp/shfmt \
     "$(/ctx/build_files/github-release-url.sh mvdan/sh ${MACHINE}.${ARCH} $SHFMT_VERSION)"
 install -o root -g root -m 0755 /tmp/shfmt /usr/bin/shfmt
 
+log "Installing talosctl"
+TALOSCTL_VERSION="v1.11.2" # renovate: datasource=github-releases depName=siderolabs/talos
+curl -sLo /tmp/talosctl \
+    "$(/ctx/build_files/github-release-url.sh siderolabs/talos talosctl-${MACHINE}.${ARCH} $TALOSCTL_VERSION)"
+install -o root -g root -m 0755 /tmp/talosctl /usr/bin/talosctl
+/usr/bin/talosctl completion bash >/etc/bash_completion.d/talosctl.sh
+
 log "Installing helm"
 HELM_VERSION="v3.19.0" # renovate: datasource=github-releases depName=helm/helm
 curl -sLo /tmp/helm.tar.gz "https://get.helm.sh/helm-${HELM_VERSION}-${MACHINE}-${ARCH}.tar.gz"
