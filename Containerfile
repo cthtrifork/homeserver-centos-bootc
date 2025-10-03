@@ -44,6 +44,7 @@ RUN dnf -y install \
       firewalld \
       rsync \
       unzip \
+      python3 \
       python3-pip \
       tree \
       git \
