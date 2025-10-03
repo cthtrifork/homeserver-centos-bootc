@@ -28,9 +28,19 @@ curl -sLo /tmp/kubelogin.zip \
     "$(/ctx/build_files/github-release-url.sh int128/kubelogin ${MACHINE}.${ARCH}.zip $KUBELOGIN_VERSION)"
 unzip /tmp/kubelogin.zip -d /usr/bin/ -x "LICENSE" "README.md"
 # Create symlinks so kubectl recognizes the plugin
-ln -sf /usr/bin/kubelogin /usr/bin/kubectl-oidc-login
 ln -sf /usr/bin/kubelogin /usr/bin/kubectl-oidc_login
 /usr/bin/kubelogin completion bash >/etc/bash_completion.d/kubelogin.sh
+
+log "Installing kubectl virt"
+KUBEVIRT_VERSION="v1.6.2" # renovate: datasource=github-releases depName=kubevirt/kubectl-virt-plugin
+mkdir -p /tmp/kubectl-virt
+curl -sLo /tmp/kubectl-virt.tar.gz \
+    "$(/ctx/build_files/github-release-url.sh kubevirt/kubectl-virt-plugin virtctl-${MACHINE}-${ARCH}.tar.gz $KUBEVIRT_VERSION)"
+tar -zxvf /tmp/kubectl-virt.tar.gz -C /tmp/kubectl-virt/ --strip-components=1 --exclude=LICENSE
+install -o root -g root -m 0755 /tmp/kubectl-virt/virtctl-${MACHINE}-${ARCH} /usr/bin/virtctl
+# Create symlinks so kubectl recognizes the plugin
+ln -sf /usr/bin/virtctl /usr/bin/kubectl-virt
+/usr/bin/virtctl completion bash >/etc/bash_completion.d/virtctl.sh
 
 log "Installing kubectl-cnpg"
 KUBECTLCNPG_VERSION="v1.27.0" # renovate: datasource=github-releases depName=cloudnative-pg/cloudnative-pg
