@@ -29,6 +29,7 @@ curl -sLo /tmp/kubelogin.zip \
 unzip /tmp/kubelogin.zip -d /usr/bin/ -x "LICENSE" "README.md"
 # Create symlinks so kubectl recognizes the plugin
 ln -sf /usr/bin/kubelogin /usr/bin/kubectl-oidc-login
+ln -sf /usr/bin/kubelogin /usr/bin/kubectl-oidc_login
 /usr/bin/kubelogin completion bash >/etc/bash_completion.d/kubelogin.sh
 
 log "Installing kubectl-cnpg"
