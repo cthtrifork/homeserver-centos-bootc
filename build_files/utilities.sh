@@ -72,6 +72,12 @@ curl -sLo /tmp/sops \
     "$(/ctx/build_files/github-release-url.sh getsops/sops ${MACHINE}.${ARCH} $SOPS_VERSION)"
 install -o root -g root -m 0755 /tmp/sops /usr/bin/sops
 
+log "Installing mkcert"
+MKCERT_VERSION=v1.4.4 # renovate: datasource=github-releases depName=FiloSottile/mkcert
+curl -sLo /tmp/mkcert \
+    "$(/ctx/build_files/github-release-url.sh FiloSottile/mkcert ${MACHINE}.${ARCH} $MKCERT_VERSION)"
+install -o root -g root -m 0755 /tmp/mkcert /usr/bin/mkcert
+
 log "Installing jq"
 JQ_VERSION="jq-1.8.1" # renovate: datasource=github-releases depName=jqlang/jq
 curl -sLo /tmp/jq \
