@@ -44,14 +44,14 @@ RUN dnf -y install \
       firewalld \
       rsync \
       unzip \
-      # python3-pip
+      python3-pip
       tree \
       git \
       make \
     && dnf -y install 'dnf-command(config-manager)'
 
 # pip3 dependencies
-# RUN pip3 install glances
+RUN pip3 install glances
 
 RUN --mount=type=secret,id=registry_token,required=true GITHUB_TOKEN="$(cat /run/secrets/registry_token)"; \
     printf "export GITHUB_TOKEN=%s\n" "$GITHUB_TOKEN" | tee /etc/profile.d/89-github-auth.sh
