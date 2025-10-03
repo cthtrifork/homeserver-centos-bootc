@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.18@sha256:dabfc0969b935b2080555ace70ee69a5261af8a8f1b4df97b9e7fbcf6722eddf
+# syntax=docker/dockerfile:1.19@sha256:b6afd42430b15f2d2a4c5a02b919e98a525b785b1aaff16747d2f623364e39b6
 FROM scratch AS ctx
 COPY / /
 
@@ -9,6 +9,9 @@ RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-su
 
 # Write some metadata
 RUN echo VARIANT="HomeServer bootc OS" && echo VARIANT_ID=com.github.caspertdk.homeserver-bootc >> /usr/lib/os-release
+
+# Set timezone
+RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 
 # Registry auth
 ARG REGISTRY_URL
@@ -32,6 +35,7 @@ RUN --mount=type=secret,id=creds,required=true \
 # Install common utilities
 #RUN dnf -y group install 'Development Tools' # this one is huge and includes java!
 RUN dnf -y install \
+      ca-certificates \
       dnf-plugins-core \
       procps-ng \
       curl \
@@ -40,17 +44,17 @@ RUN dnf -y install \
       firewalld \
       rsync \
       unzip \
-      # python3-pip
+      python3-pip \
       tree \
       git \
       make \
     && dnf -y install 'dnf-command(config-manager)'
 
 # pip3 dependencies
-# RUN pip3 install glances
+RUN pip3 install glances
 
 RUN --mount=type=secret,id=registry_token,required=true GITHUB_TOKEN="$(cat /run/secrets/registry_token)"; \
-    printf "GITHUB_TOKEN=%s\n" "$GITHUB_TOKEN" | tee /etc/profile.d/89-github-auth.sh
+    printf "export GITHUB_TOKEN=%s\n" "$GITHUB_TOKEN" | tee /etc/profile.d/89-github-auth.sh
 ARG PINGGY_HOST
 RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     #--mount=type=cache,dst=/var/cache \
