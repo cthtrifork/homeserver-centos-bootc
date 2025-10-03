@@ -1,4 +1,4 @@
-name: Create vmdk
+name: Create homeserver bootable container image
 
 on:
   workflow_dispatch:
@@ -27,9 +27,14 @@ on:
         type: string
         required: true
         default: "."
+      tag:
+        description: "Image tag"
+        type: string
+        required: true
+        default: "latest"
 
 jobs:
-  create-vmdk:
+  create-image:
     name: Build vmdk
     runs-on: ubuntu-latest
     environment: dev
@@ -48,18 +53,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create VMDK image
-        id: create-vmdk
+      - name: Create image
+        id: create-image
         uses: ublue-os/bootc-image-builder-action@main
         with:
           config-file: ${{ inputs.context }}/config.toml
           type: iso
           rootfs: xfs
-          image: ghcr.io/${{ github.repository }}/${{ inputs.image_name }}:latest
+          image: ghcr.io/${{ github.repository }}/${{ inputs.image_name }}:${{ inputs.tag }}
 
-      - name: Upload VMDK artifact
+      - name: Upload image artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ inputs.image_name }}
-          path: ${{ steps.create-vmdk.outputs.output-path }}
+          path: ${{ steps.create-image.outputs.output-path }}
 
