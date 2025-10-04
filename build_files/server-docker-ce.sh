@@ -12,7 +12,7 @@ log() {
 dnf remove -y docker-cli moby-engine
 
 # Setup repo
-dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+dnf config-manager addrepo --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo
 
 dnf install -y \
     docker-ce \
