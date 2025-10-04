@@ -153,7 +153,7 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" > /tmp/REGISTRY_TOKEN
             echo "" > /tmp/PINGGY_TOKEN
           else
-            echo "${{ secrets.PAT_RENOVATEBOT }}" > /tmp/REGISTRY_TOKEN
+            echo "${{ secrets.HOMESERVER_PAT }}" > /tmp/REGISTRY_TOKEN
             echo "${{ secrets.PINGGY_TOKEN }}" > /tmp/PINGGY_TOKEN
           fi
 
