@@ -35,6 +35,7 @@ RUN --mount=type=secret,id=creds,required=true \
 # Install common utilities
 #RUN dnf -y group install 'Development Tools' # this one is huge and includes java!
 RUN dnf -y install \
+      dnf5-plugins \
       ca-certificates \
       dnf-plugins-core \
       procps-ng \
@@ -47,8 +48,7 @@ RUN dnf -y install \
       python3-pip \
       tree \
       git \
-      make \
-    && dnf -y install 'dnf-command(config-manager)'
+      make
 
 # pip3 dependencies
 RUN pip3 install glances
