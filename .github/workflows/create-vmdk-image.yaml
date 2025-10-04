@@ -35,7 +35,7 @@ on:
 
 jobs:
   create-image:
-    name: Build vmdk
+    name: Build ${{ inputs.type }} image
     runs-on: ubuntu-latest
     environment: dev
     permissions:
@@ -58,7 +58,7 @@ jobs:
         uses: ublue-os/bootc-image-builder-action@main
         with:
           config-file: ${{ inputs.context }}/config.toml
-          type: iso
+          type: ${{ inputs.type }}
           rootfs: xfs
           image: ghcr.io/${{ github.repository }}/${{ inputs.image_name }}:${{ inputs.tag }}
 
