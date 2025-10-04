@@ -680,6 +680,8 @@ jobs:
               INPUT_ARGS+="--use-librepo=False "
           fi
 
+          [ -n "${ROOTFS}" ] && INPUT_ARGS+="--rootfs=${ROOTFS} "
+
           sudo podman run \
             --rm \
             --privileged \
