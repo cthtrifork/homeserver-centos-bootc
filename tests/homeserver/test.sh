@@ -20,5 +20,8 @@ if [ -z "${ENV_LOAD:-}" ]; then
 fi
 echo "ENV_LOAD is set to '$ENV_LOAD'. /etc/profile.d is working as intended."
 
-echo "checking if user is in docker group"
+echo "Checking if user is in docker group"
 docker run --rm hello-world
+
+echo "Checking github Auth status"
+gh auth status
