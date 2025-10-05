@@ -2,7 +2,7 @@
 FROM scratch AS ctx
 COPY / /
 
-FROM quay.io/centos-bootc/centos-bootc:stream9@sha256:3a75c664fbf8c540b0c75e9c0cac76828ee600bc58b4378c73a3d9a5eb2f0852
+FROM quay.io/fedora/fedora-bootc:42
 
 #setup sudo to not require password
 RUN echo "%wheel        ALL=(ALL)       NOPASSWD: ALL" > /etc/sudoers.d/wheel-sudo
@@ -35,6 +35,7 @@ RUN --mount=type=secret,id=creds,required=true \
 # Install common utilities
 #RUN dnf -y group install 'Development Tools' # this one is huge and includes java!
 RUN dnf -y install \
+      dnf5-plugins \
       ca-certificates \
       dnf-plugins-core \
       procps-ng \
@@ -44,11 +45,11 @@ RUN dnf -y install \
       firewalld \
       rsync \
       unzip \
+      python3 \
       python3-pip \
       tree \
       git \
-      make \
-    && dnf -y install 'dnf-command(config-manager)'
+      make
 
 # pip3 dependencies
 RUN pip3 install glances
