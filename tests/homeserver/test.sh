@@ -13,6 +13,14 @@ for s in $CORE_SERVICES; do
 done
 echo "all ok"
 
+
+
+echo "== casper: home directory exists =="
+sudo test -d /home/caspertdk
+sudo homectl inspect caspertdk
+userdbctl ssh-authorized-keys caspertdk
+echo "✅ homed user creation + authorized keys OK"
+
 # check if env var ENV_LOAD is loaded
 if [ -z "${ENV_LOAD:-}" ]; then
     echo "ENV_LOAD is not set"
