@@ -15,7 +15,7 @@ echo "all ok"
 
 
 
-echo "== casper: home directory exists =="
+echo "== caspertdk: home directory exists =="
 sudo test -d /home/caspertdk
 sudo homectl inspect caspertdk
 userdbctl ssh-authorized-keys caspertdk

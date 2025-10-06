@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euxo pipefail
+set -euo pipefail
 
 # SCRIPT VERSION
 GROUP_SETUP_VER=1

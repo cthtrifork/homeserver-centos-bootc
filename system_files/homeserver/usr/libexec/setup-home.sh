@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euxo pipefail
+set -euo pipefail
 
 if [[ $# -ne 1 ]]; then
   echo "Usage: $0 <username>" >&2
