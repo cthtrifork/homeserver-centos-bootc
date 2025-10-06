@@ -9,7 +9,7 @@ Type=oneshot
 # Import all credentials named 'home.create.*' from /usr/lib/credstore/
 ImportCredential=home.create.*
 # Create all users described by those credentials (non-interactive)
-ExecStart=/usr/bin/homectl firstboot --apply-all
+ExecStart=/usr/bin/homectl firstboot
 ExecStart=/usr/bin/touch /var/lib/homed-firstboot.done
 RemainAfterExit=yes
 
