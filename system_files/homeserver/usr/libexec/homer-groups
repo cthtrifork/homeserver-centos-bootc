@@ -51,16 +51,13 @@ for user in $wheelarray; do
 done
 
 # Run script if updated
-if [[ -f $GROUP_SETUP_VER_FILE && "$GROUP_SETUP_VER" = "$GROUP_SETUP_VER_RAN" ]]; then
-  echo "Group setup has already run. Exiting..."
-  exit 0
+if [[ ! -f $GROUP_SETUP_VER_FILE && "$GROUP_SETUP_VER" != "$GROUP_SETUP_VER_RAN" ]]; then
+  for user in $wheelarray; do
+    usermod -aG docker $user
+    # todo: add more groups here
+  done
+
+  # Prevent future executions
+  echo "Writing state file"
+  echo "$GROUP_SETUP_VER" >"$GROUP_SETUP_VER_FILE"
 fi
-
-for user in $wheelarray; do
-  usermod -aG docker $user
-  # todo: add more groups here
-done
-
-# Prevent future executions
-echo "Writing state file"
-echo "$GROUP_SETUP_VER" >"$GROUP_SETUP_VER_FILE"
