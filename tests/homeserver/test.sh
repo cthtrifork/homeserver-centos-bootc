@@ -16,10 +16,10 @@ echo "all ok"
 
 
 echo "== caspertdk: home directory exists =="
-sudo test -d /home/caspertdk || (exit 1 && echo "home directory missing")
-sudo test -f /home/caspertdk/.gitconfig || (exit 1 && echo "git config missing")
-sudo homectl inspect caspertdk || (exit 1 && echo "user missing")
-userdbctl ssh-authorized-keys caspertdk || (exit 1 && echo "authorized keys missing")
+sudo test -d /home/caspertdk || echo "❌ home directory missing"; exit 1;
+sudo test -f /home/caspertdk/.gitconfig || echo "❌ git config missing"; exit 1;
+sudo homectl inspect caspertdk || echo "❌ user missing"; exit 1;
+userdbctl ssh-authorized-keys caspertdk || echo "❌ authorized keys missing"; exit 1;
 echo "✅ homed user creation + authorized keys OK"
 
 # check if env var ENV_LOAD is loaded
