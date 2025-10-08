@@ -1,7 +1,8 @@
 [Unit]
 Description=Create systemd-homed users on first boot (from credentials)
-After=systemd-userdbd.service systemd-homed.service homer-groups.service
-Wants=systemd-userdbd.service systemd-homed.service homer-groups.service
+After=systemd-userdbd.service systemd-homed.service
+Wants=systemd-userdbd.service systemd-homed.service
+Before=homer-groups.service
 ConditionPathExists=!/var/lib/homed-firstboot.done
 
 [Service]
