@@ -20,7 +20,6 @@ for user in $wheelarray; do
     echo "User $user not found in systemd-homed, creating..."
     homectl create "$user" --identity=/usr/lib/userdb/$user.user || {
       echo "Failed to create user $user, skipping..."
-      exit 1
       continue
     }
   fi
