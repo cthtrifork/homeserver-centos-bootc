@@ -13,7 +13,7 @@ Type=oneshot
 # Create all users described by those credentials (non-interactive)
 #ExecStart=/usr/bin/homectl firstboot
 
-ExecStart=/bin/bash -c 'if ! homectl inspect caspertdk >/dev/null 2>&1; then homectl create caspertdk --identity=/usr/lib/userdb/caspertdk.user; fi'
+ExecStart=/usr/bin/bash -c 'homectl create caspertdk --identity=/usr/lib/userdb/caspertdk.user'
 ExecStart=/usr/bin/touch /var/lib/homed-firstboot.done
 RemainAfterExit=yes
 
