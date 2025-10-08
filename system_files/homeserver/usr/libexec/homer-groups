@@ -15,14 +15,14 @@ wheelarray=($(getent group wheel | cut -d ":" -f 4 | tr ',' '\n'))
 for user in $wheelarray; do
   echo "Setting up home for user: $user"
   
-  # Ensure systemd-homed user is activated (this will mount/create the home directory)
+  # Ensure systemd-homed user exists, create if needed
   if ! homectl inspect "$user" >/dev/null 2>&1; then
-    echo "User $user not found in systemd-homed, skipping..."
-    continue
-  fi
-  
-  if ! homectl inspect $user >/dev/null 2>&1; then
-    homectl create $user --identity=/usr/lib/userdb/$user.user; 
+    echo "User $user not found in systemd-homed, creating..."
+    homectl create "$user" --identity=/usr/lib/userdb/$user.user || {
+      echo "Failed to create user $user, skipping..."
+      exit 1
+      continue
+    }
   fi
 
   # Activate the user to ensure home directory is available
