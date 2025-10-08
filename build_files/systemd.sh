@@ -15,6 +15,6 @@ systemctl enable podman.socket
 systemctl enable systemd-userdbd.service
 systemctl enable systemd-homed.service 
 systemctl enable sshd.service
-#systemctl enable homed-firstboot-users.service
+systemctl enable homed-firstboot-users.service
 systemctl enable homer-groups.service
 systemctl enable pinggy.service
