@@ -1,7 +1,8 @@
 [Unit]
 Description=Add wheel members to docker groups
-After=network.target homed-firstboot-users.service
-Wants=homed-firstboot-users.service
+#After=network.target homed-firstboot-users.service
+After=network.target
+#Wants=homed-firstboot-users.service
 
 [Service]
 Type=oneshot

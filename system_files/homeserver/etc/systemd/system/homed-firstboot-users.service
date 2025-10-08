@@ -8,6 +8,11 @@ ConditionPathExists=!/var/lib/homed-firstboot.done
 [Service]
 Type=oneshot
 # Create user from JSON definition if not already exists
+# Import all credentials named 'home.create.*' from /usr/lib/credstore/
+#ImportCredential=home.create.*
+# Create all users described by those credentials (non-interactive)
+#ExecStart=/usr/bin/homectl firstboot
+
 ExecStart=/bin/bash -c 'if ! homectl inspect caspertdk >/dev/null 2>&1; then homectl create caspertdk --identity=/usr/lib/userdb/caspertdk.user; fi'
 ExecStart=/usr/bin/touch /var/lib/homed-firstboot.done
 RemainAfterExit=yes

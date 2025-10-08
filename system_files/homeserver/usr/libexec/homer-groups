@@ -21,6 +21,10 @@ for user in $wheelarray; do
     continue
   fi
   
+  if ! homectl inspect $user >/dev/null 2>&1; then
+    homectl create $user --identity=/usr/lib/userdb/$user.user; 
+  fi
+
   # Activate the user to ensure home directory is available
   homectl activate "$user" || true
   
