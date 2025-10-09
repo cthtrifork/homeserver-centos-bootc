@@ -734,6 +734,7 @@ jobs:
             -daemonize > out/qemu-console.log 2>&1
 
       - name: Wait for SSH and run startup checks
+        timeout-minutes: 5
         env:
           SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
           SSH_USERNAME: ${{ env.SSH_USERNAME }}

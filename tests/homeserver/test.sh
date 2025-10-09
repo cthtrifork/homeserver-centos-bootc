@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "Verifying status for custom installed services..."
-CORE_SERVICES="pinggy.service homer-groups.service" # todo: detect
+CORE_SERVICES="pinggy.service homer-groups.service setup-caspertdk.service" # todo: detect
 echo "--- core services ---"
 for s in $CORE_SERVICES; do
     systemctl is-active --quiet "$s" || {
