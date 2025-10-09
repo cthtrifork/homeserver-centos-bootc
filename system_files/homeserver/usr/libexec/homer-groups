@@ -12,19 +12,18 @@ GROUP_SETUP_VER_RAN=$(cat "$GROUP_SETUP_VER_FILE")
 wheelarray=($(getent group wheel | cut -d ":" -f 4 | tr ',' '\n'))
 
 BASE=1000001
-STEP=1000000
+STEP=0100000
 SIZE=65536
 
-mv /etc/subuid /etc/subuid.bak || true
-mv /etc/subgid /etc/subgid.bak || true
+#mv /etc/subuid /etc/subuid.bak || true
+#mv /etc/subgid /etc/subgid.bak || true
 
 # Setup home directory for each user in wheel group
 for user in $wheelarray; do
   echo "Setting up home for user: $user"
 
   start=$((BASE + i * STEP))
-  v
-  echo "$user:$start:$SIZE" | tee -a /etc/subuid /etc/subgid >/dev/null
+  #echo "$user:$start:$SIZE" | tee -a /etc/subuid /etc/subgid >/dev/null
 
   #ln -sf /etc/containers/auth.json /home/$user/.config/containers/auth.json
   #ln -sf /usr/lib/container-auth.json /home/$user/.docker/config.json
