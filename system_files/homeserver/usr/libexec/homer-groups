@@ -14,33 +14,8 @@ wheelarray=($(getent group wheel | cut -d ":" -f 4 | tr ',' '\n'))
 # Setup home directory for each user in wheel group
 for user in $wheelarray; do
   echo "Setting up home for user: $user"
-  
-  # Ensure systemd-homed user exists, create if needed
-  if ! homectl inspect "$user" >/dev/null 2>&1; then
-    echo "User $user not found in systemd-homed, creating..."
-    homectl create "$user" --identity=/usr/lib/userdb/$user.user || {
-      echo "Failed to create user $user, skipping..."
-      continue
-    }
-  fi
 
-  # Activate the user to ensure home directory is available
-  homectl activate "$user" || true
-  
-  # Wait for home directory to be available
-  for i in {1..30}; do
-    if [[ -d /home/$user ]]; then
-      break
-    fi
-    echo "Waiting for /home/$user to be available... ($i/30)"
-    sleep 1
-  done
-  
-  if [[ ! -d /home/$user ]]; then
-    echo "Error: /home/$user not available after activation, skipping user $user"
-    continue
-  fi
-
+  # todo: move to tmpfiles.d
   install -o $user -g $user -m 0700 -d /home/$user/.docker
   install -o $user -g $user -m 0700 -d /home/$user/.config
   install -o $user -g $user -m 0700 -d /home/$user/.config/containers

@@ -1,7 +1,8 @@
 [Unit]
 Description=Add wheel members to docker groups
-After=network.target homed-firstboot-users.service
-Wants=homed-firstboot-users.service
+After=network.target
+#After=network.target homed-firstboot-users.service
+#Wants=homed-firstboot-users.service
 
 [Service]
 Type=oneshot
@@ -10,8 +11,6 @@ StandardError=inherit
 StandardOutput=journal
 RemainAfterExit=yes
 Restart=no
-
-TimeoutStartSec=30
 
 [Install]
 WantedBy=multi-user.target
