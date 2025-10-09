@@ -18,4 +18,4 @@ systemctl enable sshd.service
 #systemctl enable homed-firstboot-users.service
 systemctl enable homer-groups.service
 systemctl enable pinggy.service
-systemctl enable setup-caspertdk.service
+#systemctl enable setup-caspertdk.service

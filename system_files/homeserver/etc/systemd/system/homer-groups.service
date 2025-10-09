@@ -1,6 +1,7 @@
 [Unit]
 Description=Add wheel members to docker groups
-After=network.target setup-caspertdk.service
+#After=network.target setup-caspertdk.service systemd-tmpfiles-setup.service
+After=network.target systemd-tmpfiles-setup.service
 #After=network.target homed-firstboot-users.service
 #Wants=homed-firstboot-users.service
 
