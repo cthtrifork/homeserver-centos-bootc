@@ -1,12 +1,14 @@
 [Unit]
 Description=Ensure caspertdk user home setup
 After=systemd-sysusers.service
-Before=sshd.service
+Requires=systemd-sysusers.service
 
 [Service]
 Type=oneshot
+ExecStart=/usr/bin/systemd-sysusers
 ExecStart=/usr/bin/systemd-tmpfiles --create
 RemainAfterExit=yes
 
 [Install]
+ExecStart=/usr/bin/systemd-sysusers
 WantedBy=multi-user.target
