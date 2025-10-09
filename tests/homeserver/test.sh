@@ -16,8 +16,8 @@ echo "all ok"
 #/usr/bin/systemd-tmpfiles --cat-config
 
 echo "== caspertdk: home directory exists =="
-test -d /home/caspertdk || echo "❌ home directory missing"; exit 1;
-test -f /home/caspertdk/.gitconfig || echo "❌ git config missing"; exit 1;
+test -d /home/caspertdk && echo "✅ home directory exists" || { echo "❌ home directory missing"; exit 1; }
+test -f /home/caspertdk/.gitconfig && echo "✅ git config exists" || { echo "❌ git config missing"; exit 1; }
 echo "✅ homed user creation + authorized keys OK"
 
 # check if env var ENV_LOAD is loaded
