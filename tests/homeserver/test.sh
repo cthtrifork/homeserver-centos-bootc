@@ -16,9 +16,9 @@ echo "all ok"
 #/usr/bin/systemd-tmpfiles --cat-config
 
 echo "== caspertdk: home directory exists =="
-test -d /home/caspertdk && echo "✅ home directory exists" || { echo "❌ home directory missing"; exit 1; }
-tree -uag /home/caspertdk 
-test -f /home/caspertdk/.ssh/authorized_keys && echo "✅ authorized_keys exists" || { echo "❌ authorized_keys missing"; exit 1; }
+sudo test -d /home/caspertdk && echo "✅ home directory exists" || { echo "❌ home directory missing"; exit 1; }
+sudo tree -uag /home/caspertdk 
+sudo test -f /home/caspertdk/.ssh/authorized_keys && echo "✅ authorized_keys exists" || { echo "❌ authorized_keys missing"; exit 1; }
 echo "✅ homed user creation + authorized keys OK"
 
 # check if env var ENV_LOAD is loaded
