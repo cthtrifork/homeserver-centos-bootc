@@ -17,5 +17,7 @@ ExecStart=/usr/bin/bash -c 'homectl create caspertdk --identity=/usr/lib/userdb/
 ExecStart=/usr/bin/touch /var/lib/homed-firstboot.done
 RemainAfterExit=yes
 
+TimeoutStartSec=30
+
 [Install]
 WantedBy=multi-user.target

@@ -11,5 +11,7 @@ StandardOutput=journal
 RemainAfterExit=yes
 Restart=no
 
+TimeoutStartSec=30
+
 [Install]
 WantedBy=multi-user.target

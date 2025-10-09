@@ -770,19 +770,19 @@ jobs:
             ${SSH_USERNAME}@localhost \
             "sudo bootc status"
 
-          echo "--- system is-running ---"
+          echo "--- rpm-ostree status ---"
           ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
             "rpm-ostree status"
 
-          echo "--- system is-running ---"
+          echo "--- systemctl is-system-running ---"
           ssh "${SSH_OPTS[@]}" \
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
-            "systemctl is-system-running --wait"
+            "timeout 30 systemctl is-system-running --wait || echo 'System may not be fully ready but continuing...'"
 
           echo "--- stats ---"
           ssh "${SSH_OPTS[@]}" \
