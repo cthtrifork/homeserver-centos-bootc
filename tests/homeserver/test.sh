@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euxo pipefail
+set -euo pipefail
 
 echo "Verifying status for custom installed services..."
 CORE_SERVICES="pinggy.service homer-groups.service setup-caspertdk.service" # todo: detect
@@ -13,7 +13,7 @@ for s in $CORE_SERVICES; do
 done
 echo "all ok"
 
-
+/usr/bin/systemd-tmpfiles --cat-config
 
 echo "== caspertdk: home directory exists =="
 test -d /home/caspertdk || echo "❌ home directory missing"; exit 1;

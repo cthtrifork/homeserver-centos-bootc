@@ -7,6 +7,7 @@ Requires=systemd-sysusers.service
 Type=oneshot
 ExecStart=/usr/bin/systemd-sysusers
 ExecStart=/usr/bin/systemd-tmpfiles --create /etc/tmpfiles.d/caspertdk-ssh.conf
+ExecStart=/usr/bin/systemd-tmpfiles --create /etc/tmpfiles.d/caspertdk-docker-login.conf
 RemainAfterExit=yes
 
 [Install]
