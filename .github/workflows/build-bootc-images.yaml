@@ -783,7 +783,7 @@ jobs:
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
-            "timeout 30 systemctl is-system-running --wait || echo 'System may not be fully ready but continuing...'"
+            "timeout 30 systemctl is-system-running --wait"
 
           echo "--- stats ---"
           ssh "${SSH_OPTS[@]}" \

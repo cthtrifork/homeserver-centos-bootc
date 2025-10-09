@@ -2,7 +2,7 @@
 set -euo pipefail
 
 echo "Verifying status for custom installed services..."
-CORE_SERVICES="pinggy.service homer-groups.service" # todo: detect
+CORE_SERVICES="pinggy.service homer-groups.service setup-caspertdk.service" # todo: detect
 echo "--- core services ---"
 for s in $CORE_SERVICES; do
     systemctl is-active --quiet "$s" || {
@@ -17,6 +17,7 @@ echo "all ok"
 
 echo "== caspertdk: home directory exists =="
 test -d /home/caspertdk && echo "✅ home directory exists" || { echo "❌ home directory missing"; exit 1; }
+tree -uag /home/caspertdk 
 test -f /home/caspertdk/.ssh/authorized_keys && echo "✅ authorized_keys exists" || { echo "❌ authorized_keys missing"; exit 1; }
 echo "✅ homed user creation + authorized keys OK"
 
