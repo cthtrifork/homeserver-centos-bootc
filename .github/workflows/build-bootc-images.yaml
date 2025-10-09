@@ -731,7 +731,7 @@ jobs:
             -net user,hostfwd=tcp::2222-:22 \
             -display none \
             -monitor unix:/tmp/qemu-monitor-sock,server,nowait \
-            -daemonize > out/qemu-console.log 2>&1
+            -daemonize 1> out/qemu-console.log 2>&1
 
       - name: Wait for SSH and run startup checks
         timeout-minutes: 5

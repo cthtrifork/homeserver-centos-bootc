@@ -15,3 +15,4 @@ systemctl enable podman.socket
 systemctl enable sshd.service
 systemctl enable homer-groups.service
 systemctl enable pinggy.service
+systemctl enable setup-caspertdk.service
