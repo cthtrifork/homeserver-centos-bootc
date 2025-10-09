@@ -32,4 +32,7 @@ echo "Checking if user is in docker group"
 docker run --rm hello-world
 
 echo "Checking github Auth status"
+
+echo "GitHub token fingerprint: $(printf "%s" "$GITHUB_TOKEN" | sha256sum | cut -c1-6)"
+
 gh auth status
