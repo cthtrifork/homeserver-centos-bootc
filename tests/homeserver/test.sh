@@ -13,7 +13,7 @@ for s in $CORE_SERVICES; do
 done
 echo "all ok"
 
-/usr/bin/systemd-tmpfiles --cat-config
+#/usr/bin/systemd-tmpfiles --cat-config
 
 echo "== caspertdk: home directory exists =="
 test -d /home/caspertdk || echo "❌ home directory missing"; exit 1;
