@@ -26,7 +26,7 @@ for user in $wheelarray; do
   #ln -sf /etc/containers/auth.json /home/$user/.config/containers/auth.json
   #ln -sf /usr/lib/container-auth.json /home/$user/.docker/config.json
 
-  runuser -u "$user" -- /usr/libexec/setup-home.sh "$user"
+  sudo -u "$user" -- /usr/libexec/setup-home.sh "$user"
   usermod -aG docker $user
 
   i=$((i + 1))
