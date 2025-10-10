@@ -791,22 +791,6 @@ jobs:
             ${SSH_USERNAME}@localhost \
             "df -h"
 
-      - name: Verify ghcr auth
-        env:
-          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
-          SSH_USERNAME: ${{ env.SSH_USERNAME }}
-          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
-          IMAGE_FULL: ${{ env.IMAGE_FULL }}
-        run: | #sh
-          # turn the env string into a Bash array
-          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
-          cat ./tests/verify-cosign.sh | ssh "${SSH_OPTS[@]}" \
-            -i "$SSH_KEY" \
-            -p 2222 \
-            "$SSH_USERNAME"@localhost \
-              IMAGE_FULL="$IMAGE_FULL" \
-              bash -s --
-
       - name: Run system tests
         env:
           SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
@@ -838,16 +822,33 @@ jobs:
       - name: Verify real user can log in
         env:
           SSH_USERNAME: caspertdk
+          SSH_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
           SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
         run: | #sh
           # turn the env string into a Bash array
           read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
           
           ssh -vvv "${SSH_OPTS[@]}" \
-            -i "${{ steps.private_key_path.outputs.private_key_path }}" \
+            -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
-            "whoami"
+            "who"
+
+      - name: Verify ghcr auth
+        env:
+          SSH_USERNAME: caspertdk
+          SSH_KEY: ${{ steps.private_key_path.outputs.private_key_path }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+          IMAGE_FULL: ${{ env.IMAGE_FULL }}
+        run: | #sh
+          # turn the env string into a Bash array
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+          cat ./tests/verify-cosign.sh | ssh "${SSH_OPTS[@]}" \
+            -i "$SSH_KEY" \
+            -p 2222 \
+            "$SSH_USERNAME"@localhost \
+              IMAGE_FULL="$IMAGE_FULL" \
+              bash -s --
 
       - name: Collect logs and stop QEMU
         if: always()
