@@ -807,41 +807,22 @@ jobs:
               IMAGE_FULL="$IMAGE_FULL" \
               bash -s --
 
-      - name: Run system tests
+      - name: Run system tests using real user
         env:
-          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
-          SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          #SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: caspertdk
           SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
         run: | #sh
           # turn the env string into a Bash array
           read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+          
+          printf '%s' "${{ secrets.SSH_PRIVATEKEY }}" > /tmp/ssh_privatekey
+          chmod 600 /tmp/ssh_privatekey
+
           cat ./tests/${{ matrix.image }}/test.sh | ssh "${SSH_OPTS[@]}" \
-            -i "$SSH_KEY" \
+            -i "/tmp/ssh_privatekey" \
             -p 2222 \
             ${SSH_USERNAME}@localhost
-
-      # - name: /etc drift detector (fail on unexpected drift)
-      #   env:
-      #     SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
-      #     SSH_USERNAME: ${{ env.SSH_USERNAME }}
-      #     SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
-      #     # Allow-list: expected first-boot changes under /etc (adjust as your image evolves)
-      #     DRIFT_ALLOW_RE: "(^A\\s+/etc/ssh/ssh_host_.*|^A\\s+/etc/machine-id|^M\\s+/etc/issue.*|^A\\s+/etc/NetworkManager/system-connections/.*|^A\\s+/etc/resolv.conf)$"
-      #   run: | #sh
-      #     set -e
-      #     # turn the env string into a Bash array
-      #     read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
-      #     ssh "${SSH_OPTS[@]}" \
-      #       -i "$SSH_KEY" \
-      #       -p 2222 \
-      #       ${SSH_USERNAME}@localhost \
-      #         'sudo ostree admin config-diff || true' | tee out/etc-drift.txt
-      #     echo "---- Drift output ----"
-      #     cat out/etc-drift.txt || true
-      #     if grep -E '^[AMD]\s+/etc' out/etc-drift.txt | grep -Ev "${DRIFT_ALLOW_RE}" >/dev/null; then
-      #       echo "::error::Unexpected /etc drift detected (see artifact)."
-      #       exit 1
-      #     fi
 
       - name: Collect logs and stop QEMU
         if: always()
