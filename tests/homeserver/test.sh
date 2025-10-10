@@ -18,11 +18,12 @@ echo "✅ core services are OK"
 echo "== caspertdk: home directory is valid =="
 sudo test -d /home/caspertdk && echo "✅ home directory exists" || { echo "❌ home directory missing"; exit 1; }
 sudo tree -uag /home/caspertdk 
+sudo getent passwd caspertdk
 sudo test -f /home/caspertdk/.ssh/authorized_keys && echo "✅ authorized_keys exists" || { echo "❌ authorized_keys missing"; exit 1; }
 echo "✅ homed user creation + authorized keys OK"
 
 echo "== debug =="
-sudo cat /home/caspertdk/.ssh/authorized_keys
+echo "all users:"
 sudo awk -F: '/\/bin\/(bash|zsh|sh)$/ {print $1}' /etc/passwd
 
 # check if env var ENV_LOAD is loaded
