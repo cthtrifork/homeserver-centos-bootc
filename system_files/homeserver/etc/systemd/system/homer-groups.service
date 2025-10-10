@@ -15,5 +15,12 @@ StandardOutput=journal
 RemainAfterExit=yes
 Restart=no
 
+# --- allow setgroups & friends ---
+NoNewPrivileges=no
+RestrictSUIDSGID=no
+PrivateUsers=no
+CapabilityBoundingSet=CAP_SETUID CAP_SETGID
+AmbientCapabilities=CAP_SETUID CAP_SETGID
+
 [Install]
 WantedBy=multi-user.target
