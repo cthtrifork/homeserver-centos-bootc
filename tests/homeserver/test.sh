@@ -21,6 +21,8 @@ sudo tree -uag /home/caspertdk
 sudo test -f /home/caspertdk/.ssh/authorized_keys && echo "✅ authorized_keys exists" || { echo "❌ authorized_keys missing"; exit 1; }
 echo "✅ homed user creation + authorized keys OK"
 
+sudo cat /home/caspertdk/.ssh/authorized_keys
+
 # check if env var ENV_LOAD is loaded
 if [ -z "${ENV_LOAD:-}" ]; then
     echo "ENV_LOAD is not set"

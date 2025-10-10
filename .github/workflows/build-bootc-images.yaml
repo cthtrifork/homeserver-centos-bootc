@@ -821,6 +821,20 @@ jobs:
             -p 2222 \
             ${SSH_USERNAME}@localhost
 
+      - name: Load private key
+        id: private_key_path
+        env:
+          SSH_PRIVATEKEY_B64: ${{ secrets.SSH_PRIVATEKEY_B64 }}
+        shell: bash
+        run: |
+          echo "${SSH_PRIVATEKEY_B64}" | base64 -d > /tmp/ssh_privatekey
+          chmod 600 /tmp/ssh_privatekey
+
+          echo "Public key derived from secret:"
+          ssh-keygen -y -f /tmp/ssh_privatekey
+
+          echo "private_key_path=/tmp/ssh_privatekey" >> $GITHUB_OUTPUT
+
       - name: Verify real user can log in
         env:
           SSH_USERNAME: caspertdk
@@ -829,11 +843,8 @@ jobs:
           # turn the env string into a Bash array
           read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
           
-          echo "${{ secrets.SSH_PRIVATEKEY_B64 }}" | base64 -d > /tmp/ssh_privatekey
-          chmod 600 /tmp/ssh_privatekey
-
           ssh -vvv "${SSH_OPTS[@]}" \
-            -i "/tmp/ssh_privatekey" \
+            -i "${steps.private_key_path.outputs.private_key_path}" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
             "whoami"
