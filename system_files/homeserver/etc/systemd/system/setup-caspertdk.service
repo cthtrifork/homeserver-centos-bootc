@@ -6,7 +6,8 @@ Requires=systemd-sysusers.service
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/systemd-sysusers
-#ExecStart=/usr/sbin/useradd -G wheel -u 1010 -K SUB_GID_MIN=1000001 -K SUB_UID_MIN=1000001 caspertdk
+ExecStart=/usr/sbin/userdel caspertdk || true
+ExecStart=/usr/sbin/useradd -s /bin/bash -G wheel -u 1010 -K SUB_GID_MIN=1000001 -K SUB_UID_MIN=1000001 -u 1010 -g 1010 caspertdk
 ExecStart=/usr/bin/systemd-tmpfiles --create /etc/tmpfiles.d/caspertdk-ssh.conf
 ExecStart=/usr/bin/systemd-tmpfiles --create /etc/tmpfiles.d/caspertdk-docker-login.conf
 RemainAfterExit=yes
