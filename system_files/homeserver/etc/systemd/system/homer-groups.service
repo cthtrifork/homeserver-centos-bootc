@@ -1,26 +1,14 @@
 [Unit]
 Description=Add wheel members to docker groups
 After=network.target setup-caspertdk.service systemd-tmpfiles-setup.service
-#After=network.target systemd-tmpfiles-setup.service
-#After=network.target homed-firstboot-users.service
-#Wants=homed-firstboot-users.service
 
 [Service]
 Type=oneshot
-User=root
-Group=root
 ExecStart=/usr/bin/bash -eu /usr/libexec/homer-groups
 StandardError=inherit
 StandardOutput=journal
 RemainAfterExit=yes
 Restart=no
-
-# --- allow setgroups & friends ---
-NoNewPrivileges=no
-RestrictSUIDSGID=no
-PrivateUsers=no
-CapabilityBoundingSet=CAP_SETUID CAP_SETGID
-AmbientCapabilities=CAP_SETUID CAP_SETGID
 
 [Install]
 WantedBy=multi-user.target
