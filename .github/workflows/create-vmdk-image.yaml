@@ -62,6 +62,7 @@ jobs:
           rootfs: xfs
           image: ghcr.io/${{ github.repository }}/${{ inputs.image_name }}:${{ inputs.tag }}
 
+      # todo: artifacts are public, so upload them to private s3
       - name: Upload image artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
