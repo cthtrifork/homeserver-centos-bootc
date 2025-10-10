@@ -24,7 +24,6 @@ echo "✅ homed user creation + authorized keys OK"
 echo "== debug =="
 sudo cat /home/caspertdk/.ssh/authorized_keys
 sudo awk -F: '/\/bin\/(bash|zsh|sh)$/ {print $1}' /etc/passwd
-sudo users
 
 # check if env var ENV_LOAD is loaded
 if [ -z "${ENV_LOAD:-}" ]; then
