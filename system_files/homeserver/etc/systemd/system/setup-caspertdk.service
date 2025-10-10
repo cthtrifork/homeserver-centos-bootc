@@ -1,6 +1,7 @@
 [Unit]
 Description=Ensure caspertdk user home setup
-After=systemd-sysusers.service systemd-tmpfiles-setup.service
+After=network-online.target systemd-sysusers.service systemd-tmpfiles-setup.service
+Wants=network-online.target
 Requires=systemd-sysusers.service
 
 [Service]
