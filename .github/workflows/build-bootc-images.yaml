@@ -105,11 +105,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.PAT_RENOVATEBOT }}
 
-      - name: Load image
-        shell: bash
-        run: |
-          podman pull -q ${{ env.BASE_IMAGE }} || true
-          podman images
+      #- name: Load image
+      #  shell: bash
+      #  run: |
+      #    podman pull -q ${{ env.BASE_IMAGE }} || true
+      #    podman images
 
       - name: Get current date
         id: date
@@ -170,7 +170,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
-          layers: true
+          layers: false
           oci: false
           build-args: |
             REGISTRY_USERNAME="${{ github.repository_owner }}"
