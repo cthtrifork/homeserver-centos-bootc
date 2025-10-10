@@ -807,9 +807,22 @@ jobs:
               IMAGE_FULL="$IMAGE_FULL" \
               bash -s --
 
-      - name: Run system tests using real user
+      - name: Run system tests
         env:
-          #SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_KEY: ${{ steps.ssh-key.outputs.ssh_key}}
+          SSH_USERNAME: ${{ env.SSH_USERNAME }}
+          SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
+        run: | #sh
+          # turn the env string into a Bash array
+          read -ra SSH_OPTS <<< "${{ env.SSH_OPTIONS }}"
+
+          cat ./tests/${{ matrix.image }}/test.sh | ssh "${SSH_OPTS[@]}" \
+            -i "${SSH_KEY}" \
+            -p 2222 \
+            ${SSH_USERNAME}@localhost
+
+      - name: Verify real user can log in
+        env:
           SSH_USERNAME: caspertdk
           SSH_OPTIONS: ${{ env.SSH_OPTIONS }}
         run: | #sh
@@ -819,10 +832,11 @@ jobs:
           printf '%s' "${{ secrets.SSH_PRIVATEKEY }}" > /tmp/ssh_privatekey
           chmod 600 /tmp/ssh_privatekey
 
-          cat ./tests/${{ matrix.image }}/test.sh | ssh "${SSH_OPTS[@]}" \
+          ssh "${SSH_OPTS[@]}" \
             -i "/tmp/ssh_privatekey" \
             -p 2222 \
-            ${SSH_USERNAME}@localhost
+            ${SSH_USERNAME}@localhost \
+            "whoami"
 
       - name: Collect logs and stop QEMU
         if: always()
