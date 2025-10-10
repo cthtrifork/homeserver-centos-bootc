@@ -832,7 +832,7 @@ jobs:
           echo "${{ secrets.SSH_PRIVATEKEY_B64 }}" | base64 -d > /tmp/ssh_privatekey
           chmod 600 /tmp/ssh_privatekey
 
-          ssh "${SSH_OPTS[@]}" \
+          ssh -vvv "${SSH_OPTS[@]}" \
             -i "/tmp/ssh_privatekey" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
