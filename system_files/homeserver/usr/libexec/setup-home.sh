@@ -13,17 +13,18 @@ cd "$HOME_DIR"
 
 # Setup OH-MY-BASH for user
 install_ohmybash() {
-  if [[ ! -f "/usr/local/share/oh-my-bash/bashrc" ]]; then
-      # copy local
-      cp /usr/local/share/oh-my-bash/bashrc "$HOME_DIR"/.bashrc
+  if [[ -f "/usr/local/share/oh-my-bash/bashrc" ]]; then
+    # copy local
+    cp /usr/local/share/oh-my-bash/bashrc "$HOME_DIR"/.bashrc
 
-      # modify .bashrc
-      # https://github.com/ohmybash/oh-my-bash?tab=readme-ov-file
-      sed -i 's/^plugins=(git)$/plugins=(git kubectl)/g' "$HOME_DIR"/.bashrc
-      echo 'export OMB_USE_SUDO=false' >> "$HOME_DIR"/.bashrc
-      echo 'export DISABLE_AUTO_UPDATE=true' >> "$HOME_DIR"/.bashrc
+    # modify .bashrc
+    # https://github.com/ohmybash/oh-my-bash?tab=readme-ov-file
+    sed -i 's/^plugins=(git)$/plugins=(git kubectl)/g' "$HOME_DIR"/.bashrc
+    echo 'export OMB_USE_SUDO=false' >> "$HOME_DIR"/.bashrc
+    echo 'export DISABLE_AUTO_UPDATE=true' >> "$HOME_DIR"/.bashrc
+
+    sudo chown "$USER":"$USER" "$HOME_DIR"/.bashrc
   fi
-  sudo chown "$USER":"$USER" "$HOME_DIR"/.bashrc
 }
 
 # Setup .gitconfig for user
