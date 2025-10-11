@@ -22,8 +22,7 @@ for user in "${wheelarray[@]}"; do
   echo "Setting up home for user: $user"
 
   start=$((BASE + (i * STEP)))
-  # overwrite
-  echo "$user:$start:$SIZE" | tee /etc/subuid /etc/subgid >/dev/null
+  echo "$user:$start:$SIZE" | tee -a /etc/subuid /etc/subgid >/dev/null
   # todo: figure out why i need this hack...
   sudo getent passwd caspertdk | sudo tee -a /etc/passwd
 
