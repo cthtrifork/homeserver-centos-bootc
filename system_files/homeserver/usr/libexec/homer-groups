@@ -1,30 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# SCRIPT VERSION
-GROUP_SETUP_VER=1
 mkdir -p /etc/homeserver
 
 # Setup Groups
-wheelarray=($(getent group wheel | cut -d ":" -f 4 | tr ',' '\n'))
+wheelarray=($(getent group wheel | cut -d: -f4 |  tr ',' '\n'))
 
 BASE=1000000
 STEP=100000
 SIZE=65536
 
-#mv /etc/subuid /etc/subuid.bak || true
-#mv /etc/subgid /etc/subgid.bak || true
-
-# move to .service
+# Ensure system users are present/updated
 sudo systemd-sysusers
 
 # Setup home directory for each user in wheel group
 i=0
-for user in $wheelarray; do
+for user in "${wheelarray[@]}"; do
   echo "Setting up home for user: $user"
 
   start=$((BASE + (i * STEP)))
   echo "$user:$start:$SIZE" | tee -a /etc/subuid /etc/subgid >/dev/null
+  # todo: figure out why i need this hack...
   sudo getent passwd caspertdk | sudo tee -a /etc/passwd
 
   podman system migrate
@@ -34,7 +30,6 @@ for user in $wheelarray; do
 
   /usr/libexec/setup-home.sh "$user"
   sudo usermod -aG docker $user
-  newgrp docker
 
   i=$((i + 1))
 done
