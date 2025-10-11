@@ -14,8 +14,6 @@ cd "$HOME_DIR"
 # Setup OH-MY-BASH for user
 install_ohmybash() {
   if [[ ! -f "/usr/local/share/oh-my-bash/bashrc" ]]; then
-      # systemwide
-      bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --prefix=/usr/local --unattended
       # copy local
       cp /usr/local/share/oh-my-bash/bashrc "$HOME_DIR"/.bashrc
 
