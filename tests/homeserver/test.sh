@@ -25,6 +25,9 @@ echo "✅ homed user creation + authorized keys OK"
 echo "== debug =="
 echo "all users:"
 sudo awk -F: '/\/bin\/(bash|zsh|sh)$/ {print $1}' /etc/passwd
+echo "subguid and uid:"
+sudo cat /etc/subuid
+sudo cat /etc/subgid
 
 # check if env var ENV_LOAD is loaded
 if [ -z "${ENV_LOAD:-}" ]; then
