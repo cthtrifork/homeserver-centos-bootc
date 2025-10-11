@@ -23,6 +23,8 @@ for user in $wheelarray; do
   start=$((BASE + (i * STEP)))
   echo "$user:$start:$SIZE" | tee -a /etc/subuid /etc/subgid >/dev/null
 
+  podman system migrate
+
   #ln -sf /etc/containers/auth.json /home/$user/.config/containers/auth.json
   #ln -sf /usr/lib/container-auth.json /home/$user/.docker/config.json
 
