@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "Running as"
+id
+
 echo "Verifying status for custom installed services..."
 CORE_SERVICES="pinggy.service homer-groups.service setup-caspertdk.service" # todo: detect
 echo "--- core services ---"

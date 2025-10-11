@@ -33,7 +33,8 @@ for user in $wheelarray; do
   #ln -sf /usr/lib/container-auth.json /home/$user/.docker/config.json
 
   /usr/libexec/setup-home.sh "$user"
-  usermod -aG docker $user
+  sudo usermod -aG docker $user
+  newgrp docker
 
   i=$((i + 1))
 done

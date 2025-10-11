@@ -833,7 +833,7 @@ jobs:
             -i "$SSH_KEY" \
             -p 2222 \
             ${SSH_USERNAME}@localhost \
-            "who"
+            "who && id"
 
       - name: Verify ghcr auth
         env:
