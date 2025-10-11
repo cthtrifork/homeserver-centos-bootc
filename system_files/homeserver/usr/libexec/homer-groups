@@ -13,13 +13,17 @@ SIZE=65536
 # Ensure system users are present/updated
 sudo systemd-sysusers
 
+mv /etc/subuid.bak /etc/subuid.bak
+mv /etc/subgid.bak /etc/subgid.bak 
+
 # Setup home directory for each user in wheel group
 i=0
 for user in "${wheelarray[@]}"; do
   echo "Setting up home for user: $user"
 
   start=$((BASE + (i * STEP)))
-  echo "$user:$start:$SIZE" | tee -a /etc/subuid /etc/subgid >/dev/null
+  # overwrite
+  echo "$user:$start:$SIZE" | tee /etc/subuid /etc/subgid >/dev/null
   # todo: figure out why i need this hack...
   sudo getent passwd caspertdk | sudo tee -a /etc/passwd
 
