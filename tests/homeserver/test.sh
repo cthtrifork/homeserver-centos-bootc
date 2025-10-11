@@ -25,12 +25,14 @@ echo "✅ homed user creation + authorized keys OK"
 echo "== debug =="
 echo "all users (/etc/passwd):"
 sudo cat /etc/passwd
+echo "getent group wheel"
+sudo getent group wheel
 echo "/etc/subuid and /etc/subgid:"
 sudo cat /etc/subuid
 sudo cat /etc/subgid
-echo "/etc/subuid.bak and /etc/subgid.bak:"
-sudo cat /etc/subuid.bak
-sudo cat /etc/subgid.bak
+#echo "/etc/subuid.bak and /etc/subgid.bak:"
+#sudo cat /etc/subuid.bak
+#sudo cat /etc/subgid.bak
 echo "/etc/group:"
 sudo cat /etc/group
 

@@ -15,6 +15,7 @@ SIZE=65536
 #mv /etc/subuid /etc/subuid.bak || true
 #mv /etc/subgid /etc/subgid.bak || true
 
+# move to .service
 sudo systemd-sysusers
 
 # Setup home directory for each user in wheel group
@@ -24,6 +25,7 @@ for user in $wheelarray; do
 
   start=$((BASE + (i * STEP)))
   echo "$user:$start:$SIZE" | tee -a /etc/subuid /etc/subgid >/dev/null
+  sudo getent passwd caspertdk | sudo tee -a /etc/passwd
 
   podman system migrate
 
