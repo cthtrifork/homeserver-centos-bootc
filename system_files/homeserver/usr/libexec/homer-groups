@@ -13,8 +13,8 @@ SIZE=65536
 # Ensure system users are present/updated
 sudo systemd-sysusers
 
-mv /etc/subuid.bak /etc/subuid.bak
-mv /etc/subgid.bak /etc/subgid.bak 
+mv /etc/subuid /etc/subuid.bak
+mv /etc/subgid /etc/subgid.bak 
 
 # Setup home directory for each user in wheel group
 i=0
