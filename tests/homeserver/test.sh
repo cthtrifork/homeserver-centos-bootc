@@ -23,12 +23,15 @@ sudo test -f /home/caspertdk/.ssh/authorized_keys && echo "✅ authorized_keys e
 echo "✅ homed user creation + authorized keys OK"
 
 echo "== debug =="
-echo "all users:"
-sudo awk -F: '/\/bin\/(bash|zsh|sh)$/ {print $1}' /etc/passwd
-echo "subguid and uid:"
+echo "all users (/etc/passwd):"
+sudo cat /etc/passwd
+echo "/etc/subuid and /etc/subgid:"
 sudo cat /etc/subuid
 sudo cat /etc/subgid
-echo "groups"
+echo "/etc/subuid.bak and /etc/subgid.bak:"
+sudo cat /etc/subuid.bak
+sudo cat /etc/subgid.bak
+echo "/etc/group:"
 sudo cat /etc/group
 
 # check if env var ENV_LOAD is loaded
