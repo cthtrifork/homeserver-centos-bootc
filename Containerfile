@@ -17,6 +17,7 @@ RUN ln -sf /usr/share/zoneinfo/Europe/Copenhagen /etc/localtime
 ARG REGISTRY_URL
 ARG REGISTRY_USERNAME
 
+# todo: move to system_files/homeserver/usr/lib/tmpfiles.d/link-podman-credentials.conf ?
 RUN --mount=type=secret,id=creds,required=true \
     cp /run/secrets/creds /usr/lib/container-auth.json && \
     chmod 0600 /usr/lib/container-auth.json && \
@@ -64,7 +65,6 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
     --mount=type=secret,id=pinggy_token,required=true PINGGY_TOKEN="$(cat /run/secrets/pinggy_token)" \
     PINGGY_HOST="${PINGGY_HOST}" \
     /ctx/build_files/build.sh
-
 
 # COSIGN
 ADD cosign.pub /etc/pki/cosign/cosign.pub
