@@ -1,6 +1,8 @@
 {
   "userName": "caspertdk",
   "realName": "Casper Thygesen",
+  "uid": 1010,
+  "gid": 1010,
   "homeDirectory": "/home/caspertdk",
   "memberOf": ["wheel"],
   "shell": "/bin/bash",
