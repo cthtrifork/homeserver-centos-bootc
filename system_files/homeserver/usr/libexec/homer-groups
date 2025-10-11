@@ -20,7 +20,7 @@ i=0
 for user in $wheelarray; do
   echo "Setting up home for user: $user"
 
-  start=$(BASE + (i * STEP))
+  start=$((BASE + (i * STEP)))
   echo "$user:$start:$SIZE" | tee -a /etc/subuid /etc/subgid >/dev/null
 
   #ln -sf /etc/containers/auth.json /home/$user/.config/containers/auth.json
