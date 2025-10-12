@@ -72,6 +72,6 @@ jobs:
           source_dir: ${{ steps.create-image.outputs.output-directory }}
           container_name: homeserver
           connection_string: ${{ secrets.AZURE_STORAGE_CONNECTIONSTRING }}
-          extra_args: '--pattern *.tar.gz'
+          #extra_args: '--pattern *.tar.gz'
           # WARNING: this will overwrite existing blobs in your blob storage
           overwrite: 'true'
