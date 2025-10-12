@@ -20,8 +20,6 @@ for user in "${wheelarray[@]}"; do
 
   start=$((BASE + (i * STEP)))
   echo "$user:$start:$SIZE" | tee -a /etc/subuid /etc/subgid >/dev/null
-  # todo: figure out why i need this hack...
-  #getent passwd caspertdk | sudo tee -a /etc/passwd
 
   /usr/libexec/setup-home.sh "$user"
   usermod -aG docker $user
