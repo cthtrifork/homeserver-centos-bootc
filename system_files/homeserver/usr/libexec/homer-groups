@@ -10,9 +10,6 @@ BASE=1000000
 STEP=100000
 SIZE=65536
 
-# Ensure system users are present/updated
-sudo systemd-sysusers
-
 mv /etc/subuid /etc/subuid.bak
 mv /etc/subgid /etc/subgid.bak 
 
@@ -24,15 +21,10 @@ for user in "${wheelarray[@]}"; do
   start=$((BASE + (i * STEP)))
   echo "$user:$start:$SIZE" | tee -a /etc/subuid /etc/subgid >/dev/null
   # todo: figure out why i need this hack...
-  sudo getent passwd caspertdk | sudo tee -a /etc/passwd
-
-  podman system migrate
-
-  #ln -sf /etc/containers/auth.json /home/$user/.config/containers/auth.json
-  #ln -sf /usr/lib/container-auth.json /home/$user/.docker/config.json
+  getent passwd caspertdk | sudo tee -a /etc/passwd
 
   /usr/libexec/setup-home.sh "$user"
-  sudo usermod -aG docker $user
+  usermod -aG docker $user
 
   i=$((i + 1))
 done
