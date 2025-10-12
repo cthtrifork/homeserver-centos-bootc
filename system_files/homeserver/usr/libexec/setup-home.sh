@@ -23,7 +23,12 @@ install_ohmybash() {
     echo 'export OMB_USE_SUDO=false' >> "$HOME_DIR"/.bashrc
     echo 'export DISABLE_AUTO_UPDATE=true' >> "$HOME_DIR"/.bashrc
 
-    sudo chown "$USER":"$USER" "$HOME_DIR"/.bashrc
+    chown "$USER":"$USER" "$HOME_DIR"/.bashrc
+  fi
+
+  if [[ ! -f "$HOME_DIR"/.bash_profile ]]; then
+    echo 'source ~/.bashrc;' | tee "$HOME_DIR"/.bash_profile >/dev/null
+    chown "$USER":"$USER" "$HOME_DIR"/.bash_profile
   fi
 }
 
@@ -42,7 +47,7 @@ configure_gitconfig() {
   [init]
       defaultBranch = main
 EOT
-    sudo chown "$USER":"$USER" "$HOME_DIR"/.gitconfig
+    chown "$USER":"$USER" "$HOME_DIR"/.gitconfig
   fi
 }
 
