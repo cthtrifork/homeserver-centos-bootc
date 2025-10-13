@@ -82,8 +82,9 @@ jobs:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTIONSTRING }}
         run: |
           az storage azcopy blob upload \
-            -c $AZCOPY_ACCOUNT_NAME --account-name $AZCOPY_ACCOUNT_NAME \
+            -c homeserver --account-name $AZCOPY_ACCOUNT_NAME \
             -s "$SOURCE_DIR/*" \
             --recursive \
+            --only-show-errors \
             --connection-string $AZURE_STORAGE_CONNECTION_STRING
 
