@@ -21,6 +21,11 @@ for user in "${wheelarray[@]}"; do
   start=$((BASE + (i * STEP)))
   echo "$user:$start:$SIZE" | tee -a /etc/subuid /etc/subgid >/dev/null
 
+  if ! grep -q "^$user:" /etc/passwd; then
+    echo "[WARNING] Fixed user $user in /etc/passwd"
+    getent passwd $user | sudo tee -a /etc/passwd
+  fi
+
   /usr/libexec/setup-home.sh "$user"
   usermod -aG docker $user
 

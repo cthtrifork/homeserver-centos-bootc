@@ -52,7 +52,6 @@ EOT
 }
 
 install_ohmybash
-#upgrade_oh_my_bash
 configure_gitconfig
 
 echo "Finished setting up home for $USER"
