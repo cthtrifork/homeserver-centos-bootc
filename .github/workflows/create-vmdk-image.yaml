@@ -67,11 +67,25 @@ jobs:
         run: |
           mv ${{ steps.create-image.outputs.output-path }} ${{ steps.create-image.outputs.output-directory }}/${{ inputs.image_name }}-${{ inputs.tag }}.${{ inputs.type }}
 
-      - uses: bacongobbler/azure-blob-storage-upload@main
-        with:
-          source_dir: ${{ steps.create-image.outputs.output-directory }}
-          container_name: homeserver
-          connection_string: ${{ secrets.AZURE_STORAGE_CONNECTIONSTRING }}
-          #extra_args: '--pattern *.tar.gz'
-          # WARNING: this will overwrite existing blobs in your blob storage
-          overwrite: 'true'
+      - name: Install azcopy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
+
+          # when ubuntu-latest changes this needs updating from 22.04
+          wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb
+          sudo dpkg -i packages-microsoft-prod.deb
+          sudo apt-get update
+          sudo apt-get install -y azcopy
+          rm -f packages-microsoft-prod.deb
+
+      - name: Upload with access key
+        env:
+          AZCOPY_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
+          STORAGE_ACCOUNT_NAME: krusobackup
+        run: |
+          azcopy cp \
+            "${{ steps.create-image.outputs.output-directory }}" \
+            "https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/homeserver" \
+            --recursive=true \
+            --overwrite=true
