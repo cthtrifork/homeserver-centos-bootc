@@ -72,14 +72,18 @@ jobs:
           mkdir -p $HOME/tools/azcopy
           wget -qO- https://aka.ms/downloadazcopy-v10-linux | tar -xz -C $HOME/tools/azcopy --strip-components=1
           echo "$HOME/tools/azcopy" >> $GITHUB_PATH
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 
       - name: Upload with access key
         env:
           AZCOPY_ACCOUNT_KEY: ${{ secrets.AZURE_STORAGE_KEY }}
-          STORAGE_ACCOUNT_NAME: krusobackup
+          AZCOPY_ACCOUNT_NAME: krusobackup
+          SOURCE_DIR: ${{ steps.create-image.outputs.output-directory }}
+          AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTIONSTRING }}
         run: |
-          azcopy cp \
-            "${{ steps.create-image.outputs.output-directory }}" \
-            "https://${{ env.STORAGE_ACCOUNT_NAME }}.blob.core.windows.net/homeserver" \
-            --recursive=true \
-            --overwrite=true
+          az storage azcopy blob upload \
+            -c $AZCOPY_ACCOUNT_NAME --account-name $AZCOPY_ACCOUNT_NAME \
+            -s "$SOURCE_DIR/*" \
+            --recursive \
+            --connection-string $AZURE_STORAGE_CONNECTION_STRING
+
