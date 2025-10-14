@@ -55,6 +55,12 @@ RUN dnf -y install \
 # pip3 dependencies
 RUN pip3 install glances
 
+# AGE and SOPS
+RUN --mount=type=secret,id=agekey,required=true \
+    install -D -m 0600 /run/secrets/agekey /etc/sops/age/keys.txt && \
+    chown root:root /etc/sops/age/keys.txt && \
+    chmod 0640 /etc/sops/age/keys.txt
+
 RUN --mount=type=secret,id=registry_token,required=true GITHUB_TOKEN="$(cat /run/secrets/registry_token)"; \
     printf "export GITHUB_TOKEN=%s\n" "$GITHUB_TOKEN" | tee /etc/profile.d/89-github-auth.sh
 ARG PINGGY_HOST
@@ -70,6 +76,7 @@ RUN --mount=type=bind,from=ctx,src=/,dst=/ctx \
 ADD cosign.pub /etc/pki/cosign/cosign.pub
 ADD policy.json /etc/containers/policy.json
 RUN chmod 0644 /etc/pki/cosign/cosign.pub /etc/containers/policy.json
+
 
 # Networking
 #EXPOSE 8006
