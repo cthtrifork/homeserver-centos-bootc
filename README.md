@@ -34,6 +34,28 @@ Connect to a different host through pinggy:
 ssh -J portableinfo.pinggy cthtrifork@192.168.1.136
 ```
 
+### Handy commands (cheatsheet)
+
+#### Encryption
+
+1) Encrypt a file (explicit recipient):
+
+```sh
+sops --encrypt --age "$AGE_PUB" plain > encrypted.sops
+```
+
+Decrypt to stdout / to file:
+
+```sh
+SOPS_AGE_KEY_FILE=/var/lib/sops/age/keys.txt sops -d encrypted.sops > plain
+```
+
+Rotate to a new recipient (update .sops.yaml and re-encrypt):
+
+```sh
+sops --encrypt --in-place encrypted.sops
+```
+
 ## Links
 
 [Using toolbox](https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/using_image_mode_for_rhel_to_build_deploy_and_manage_operating_systems/managing-rhel-bootc-images#using-toolbx-to-inspect-bootc-containers_managing-rhel-bootc-images)

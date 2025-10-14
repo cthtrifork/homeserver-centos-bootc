@@ -157,9 +157,11 @@ jobs:
 
           echo "${{ secrets.HOMESERVER_PAT }}" > /tmp/REGISTRY_TOKEN
           cp "${HOME}/.docker/config.json" /tmp/creds
+          echo "${{ secrets.AGEKEY }}" > /tmp/AGE_KEY
           chmod 600 /tmp/creds
           chmod 600 /tmp/REGISTRY_TOKEN
           chmod 600 /tmp/PINGGY_TOKEN
+          chmod 600 /tmp/AGE_KEY
 
       - name: Use buildah build to create the image
         id: build-image
@@ -181,6 +183,7 @@ jobs:
             --secret id=registry_token,src=/tmp/REGISTRY_TOKEN
             --secret id=pinggy_token,src=/tmp/PINGGY_TOKEN
             --secret id=creds,src=/tmp/creds
+            --secret id=agekey,src=/tmp/AGE_KEY
 
       - name: Save PR image as tar
         run: |
