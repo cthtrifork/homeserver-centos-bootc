@@ -21,4 +21,3 @@ log "Decrypting SSH key"
 /usr/bin/install -d -m 0700 /var/lib/secrets/ssh
 sops --decrypt --input-type binary --output-type binary --output /var/lib/secrets/ssh/id_ed25519 /usr/share/secrets/ssh/id_ed25519.enc
 chmod 600 /var/lib/secrets/ssh/id_ed25519
-
