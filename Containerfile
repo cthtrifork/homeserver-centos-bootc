@@ -72,8 +72,8 @@ ADD policy.json /etc/containers/policy.json
 RUN chmod 0644 /etc/pki/cosign/cosign.pub /etc/containers/policy.json
 
 # AGE and SOPS
-RUN --mount=type=secret,id=agekey,required=true AGE_KEY="$(cat /run/secrets/agekey)" \
-    install -m 0600 /run/secrets/agekey /etc/sops/age/keys.txt && \
+RUN --mount=type=secret,id=agekey,required=true \
+    install -D -m 0600 /run/secrets/agekey /etc/sops/age/keys.txt && \
     chown root:root /etc/sops/age/keys.txt && \
     chmod 0640 /etc/sops/age/keys.txt
 
