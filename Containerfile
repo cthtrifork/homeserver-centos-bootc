@@ -73,9 +73,9 @@ RUN chmod 0644 /etc/pki/cosign/cosign.pub /etc/containers/policy.json
 
 # AGE and SOPS
 RUN --mount=type=secret,id=agekey,required=true AGE_KEY="$(cat /run/secrets/agekey)" \
-    sudo install -m 0600 /run/secrets/agekey /var/lib/sops/age/keys.txt && \
-    sudo chown root:root /var/lib/sops/age/keys.txt && \
-    sudo chmod 0640 /var/lib/sops/age/keys.txt
+    install -m 0600 /run/secrets/agekey /etc/sops/age/keys.txt && \
+    chown root:root /etc/sops/age/keys.txt && \
+    chmod 0640 /etc/sops/age/keys.txt
 
 # Networking
 #EXPOSE 8006
