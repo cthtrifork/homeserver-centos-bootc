@@ -18,5 +18,3 @@ systemctl enable pinggy.service
 systemctl enable setup-caspertdk.service
 systemctl enable systemd-userdbd.service
 systemctl enable decrypt-sshkey.service
-
-systemd-tmpfiles --create
