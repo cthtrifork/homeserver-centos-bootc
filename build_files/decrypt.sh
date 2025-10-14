@@ -15,6 +15,8 @@ if [[ ! -f "$SOPS_AGE_KEY_FILE" ]]; then
   exit 1
 fi
 
+grep -q '^AGE-SECRET-KEY-1' /etc/sops/age/keys.txt || { echo "Not an age key file"; exit 1; }
+
 export SOPS_AGE_KEY="$(cat $SOPS_AGE_KEY_FILE)"
 
 log "Decrypting SSH key"
