@@ -1,4 +1,4 @@
 creation_rules:
-  - path_regex: secrets/.*\.sops$
+  - path_regex: secrets/.*\.enc$
     encrypted_regex: '^(data|stringData|private_key)$'
     age: [age1qth3nzg27zdmlzpjl2gedzmt0e5nly84q82knja3fcq365kw6u9qeecy6j]
