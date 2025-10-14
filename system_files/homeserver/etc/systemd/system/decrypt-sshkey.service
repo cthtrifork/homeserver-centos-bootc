@@ -9,7 +9,7 @@ Type=oneshot
 ExecStart=/usr/bin/mkdir -p /var/lib/secrets/ssh
 # /usr/share is read-only, world-readable image content; /var/lib is writable, host state
 ExecStart=/usr/bin/sops --decrypt /usr/share/secrets/ssh/id_ed25519.sops > /var/lib/secrets/ssh/id_ed25519
-Environment=SOPS_AGE_KEY_FILE=/var/lib/sops/age/keys.txt
+Environment=SOPS_AGE_KEY_FILE=/etc/sops/age/keys.txt
 
 [Install]
 WantedBy=multi-user.target
