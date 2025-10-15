@@ -19,5 +19,5 @@ grep -q '^AGE-SECRET-KEY-1' /etc/sops/age/keys.txt || { echo "Not an age key fil
 
 log "Decrypting SSH key"
 /usr/bin/install -d -m 0700 /var/lib/secrets/ssh
-sops --decrypt --input-type binary --output-type binary --output /var/lib/secrets/ssh/id_ed25519 /usr/share/secrets/ssh/id_ed25519.enc
+sops --decrypt --input-type binary --output-type binary --output /usr/lib/secrets/ssh/id_ed25519 /usr/lib/secrets/ssh/id_ed25519.enc
 chmod 600 /var/lib/secrets/ssh/id_ed25519
