@@ -32,26 +32,6 @@ install_ohmybash() {
   fi
 }
 
-# Setup .gitconfig for user
-configure_gitconfig() {
-  if [[ -f "/home/$USER/.ssh/id_ed25519.pub" ]]; then
-    cat <<EOT | tee /home/"$USER"/.gitconfig > /dev/null
-  [user]
-      name = Casper Thygesen
-      email = cth@trifork.com
-      signingkey = /home/$USER/.ssh/id_ed25519.pub
-  [gpg]
-      format = ssh
-  [commit]
-      gpgsign = true
-  [init]
-      defaultBranch = main
-EOT
-    chown "$USER":"$USER" "$HOME_DIR"/.gitconfig
-  fi
-}
-
 install_ohmybash
-configure_gitconfig
 
 echo "Finished setting up home for $USER"
